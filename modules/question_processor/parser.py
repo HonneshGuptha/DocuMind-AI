@@ -147,8 +147,173 @@ class QuestionParser:
 
         return self._unsupported_query(orig_q, 'capital')
 
+    def _parse_name(self, q: str, orig_q: str) -> StructuredQuery:
+        # "Who am I?" -> subject: 'Speaker', predicate: 'has name', target: 'object'
+        if re.match(r'^who\s+am\s+i\s*\?*$', q, re.IGNORECASE) or re.match(r'^(?:what\s+is|what\'s)\s+my\s+name\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='name',
+                subject='Speaker',
+                predicate='has name',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        m = re.match(r'^(?:what\s+is|what\'s)\s+(?P<entity>[^?]+?)(?:\'s|s\')\s+name\s*\?*$', q, re.IGNORECASE)
+        if not m:
+            m = re.match(r'^name\s+of\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m:
+            subj = clean_entity(m.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='name',
+                subject=subj,
+                predicate='has name',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        return self._unsupported_query(orig_q, 'name')
+
+    def _parse_residence(self, q: str, orig_q: str) -> StructuredQuery:
+        # "Where do I live?"
+        if re.match(r'^(?:where|in\s+which\s+(?:city|place))\s+do\s+i\s+(?:live|reside|stay)\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='residence',
+                subject='Speaker',
+                predicate='lives in',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "Where does Honnesh live?"
+        m = re.match(r'^(?:where|in\s+which\s+(?:city|place))\s+(?:does|is)\s+(?P<entity>.+?)\s+(?:live|reside|residing|stay|staying)\s*\?*$', q, re.IGNORECASE)
+        if m:
+            subj = clean_entity(m.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='residence',
+                subject=subj,
+                predicate='lives in',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        return self._unsupported_query(orig_q, 'residence')
+
+    def _parse_employment(self, q: str, orig_q: str) -> StructuredQuery:
+        # "Where do I work?"
+        if re.match(r'^(?:where|which\s+company)\s+do\s+i\s+work(?:\s+(?:at|for))?\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='employment',
+                subject='Speaker',
+                predicate='works at',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "Who works at KPMG?" -> Reverse Lookup!
+        m_rev = re.match(r'^who\s+(?:works|is\s+employed)\s+(?:at|for|in)\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_rev:
+            obj = clean_entity(m_rev.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='employment',
+                subject=None,
+                predicate='works at',
+                object=obj,
+                expected_answer_field='subject',
+                parsing_status='success'
+            )
+
+        # "Where does Honnesh work?"
+        m = re.match(r'^(?:where|which\s+company)\s+(?:does|is)\s+(?P<entity>.+?)\s+(?:work|working|employed)(?:\s+(?:at|for))?\s*\?*$', q, re.IGNORECASE)
+        if m:
+            subj = clean_entity(m.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='employment',
+                subject=subj,
+                predicate='works at',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        return self._unsupported_query(orig_q, 'employment')
+
+    def _parse_education(self, q: str, orig_q: str) -> StructuredQuery:
+        # "Where do I study?" / "What is my college?"
+        if re.match(r'^(?:where|which\s+college|which\s+university)\s+do\s+i\s+(?:study|attend|go\s+to)(?:\s+at)?\s*\?*$', q, re.IGNORECASE) or \
+           re.match(r'^(?:what|which)\s+is\s+my\s+(?:college|university|school|institution)\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='education',
+                subject='Speaker',
+                predicate='studies at',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "What am I studying?"
+        if re.match(r'^what\s+am\s+i\s+studying\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='education',
+                subject='Speaker',
+                predicate='is a',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "What is Honnesh studying?"
+        m_stud = re.match(r'^what\s+is\s+(?P<entity>[^?]+?)\s+studying\s*\?*$', q, re.IGNORECASE)
+        if m_stud:
+            subj = clean_entity(m_stud.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='education',
+                subject=subj,
+                predicate='is a',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "Where does Honnesh study?"
+        m = re.match(r'^(?:where|which\s+college|which\s+university)\s+does\s+(?P<entity>.+?)\s+(?:study|attend|go\s+to)(?:\s+at)?\s*\?*$', q, re.IGNORECASE) or \
+            re.match(r'^(?:what|which)\s+is\s+(?P<entity>[^?]+?)(?:\'s|s\')\s+(?:college|university|school)\s*\?*$', q, re.IGNORECASE)
+        if m:
+            subj = clean_entity(m.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='education',
+                subject=subj,
+                predicate='studies at',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        return self._unsupported_query(orig_q, 'education')
+
     def _parse_location(self, q: str, orig_q: str) -> StructuredQuery:
         m = re.match(r'^where\s+is\s+(?P<entity>.+?)\s+(?:located|situated)\s*\?*$', q, re.IGNORECASE)
+        if not m:
+            m = re.match(r'^which\s+(?:country|state|continent|region)\s+(?:is|does)\s+(?P<entity>.+?)\s+(?:located\s+in|situated\s+in|belong\s+to|in)\s*\?*$', q, re.IGNORECASE)
+        if not m:
+            m = re.match(r'^(?:what|which)\s+(?:continent|country)\s+is\s+(?P<entity>.+?)\s+(?:located|situated)\s+in\s*\?*$', q, re.IGNORECASE)
+        if not m:
+            m = re.match(r'^(?:what|which)\s+(?:country|state|continent)\s+does\s+(?P<entity>.+?)\s+belong\s+to\s*\?*$', q, re.IGNORECASE)
         if not m:
             m = re.match(r'^in\s+which\s+(?:country|state|continent|region|place)\s+is\s+(?P<entity>.+?)(?:\s+(?:located|situated))?\s*\?*$', q, re.IGNORECASE)
         if not m:
@@ -343,6 +508,67 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'identity')
 
     def _parse_classification(self, q: str, orig_q: str) -> StructuredQuery:
+        # Pattern A: "Am I a student?" / "Am I an AI student?"
+        m_ami = re.match(r'^am\s+i\s+(?:a|an)\s+(?P<role>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_ami:
+            role = clean_entity(m_ami.group('role'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='classification',
+                subject='Speaker',
+                predicate='is a',
+                object=role,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Pattern B: "Is Karnataka a state in India?"
+        m_region = re.match(r'^is\s+(?P<e1>.+?)\s+a\s+(?P<type>state|city|country|province|continent)\s+in\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_region:
+            subj = clean_entity(m_region.group('e1'))
+            obj = clean_entity(m_region.group('e2'))
+            rtype = m_region.group('type').lower()
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='classification',
+                subject=subj,
+                predicate=f"is a {rtype} in",
+                object=obj,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Pattern C: "Is Bangalore located in India?"
+        m_loc = re.match(r'^is\s+(?P<e1>.+?)\s+(?:located|situated)\s+in\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_loc:
+            subj = clean_entity(m_loc.group('e1'))
+            obj = clean_entity(m_loc.group('e2'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='location',
+                subject=subj,
+                predicate='located in',
+                object=obj,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Pattern D: "Does Bangalore belong to Karnataka?"
+        m_bel = re.match(r'^does\s+(?P<e1>.+?)\s+belong\s+to\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_bel:
+            subj = clean_entity(m_bel.group('e1'))
+            obj = clean_entity(m_bel.group('e2'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='classification',
+                subject=subj,
+                predicate='belongs to',
+                object=obj,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Pattern E: WH-Classification "What is Python?" / "What kind of language is Python?"
         m = re.match(r'^what\s+(?:kind|type|sort)\s+of\s+(?:entity|thing|language|system)\s+is\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
         if not m:
             m = re.match(r'^what\s+is\s+(?:a|an)\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
@@ -361,6 +587,7 @@ class QuestionParser:
                 parsing_status='success'
             )
 
+        # Pattern F: Boolean Classification "Is Honnesh a student?" / "Is Python a programming language?"
         m_bool = re.match(r'^is\s+(?P<e1>.+?)\s+(?:a|an)\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
         if m_bool:
             subj = clean_entity(m_bool.group('e1'))

@@ -124,8 +124,9 @@ class KnowledgeBaseRepository:
         """
         query = """
         INSERT OR IGNORE INTO facts (
-            document_id, subject, predicate, object, source_sentence, sentence_index
-        ) VALUES (?, ?, ?, ?, ?, ?);
+            document_id, subject, predicate, object, source_sentence, sentence_index,
+            canonical_predicate, subject_entity_id, object_entity_id, fact_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         conn = self._get_connection()
         try:
@@ -136,7 +137,11 @@ class KnowledgeBaseRepository:
                     fact.predicate,
                     fact.object,
                     fact.source_sentence,
-                    fact.sentence_index
+                    fact.sentence_index,
+                    fact.canonical_predicate or fact.predicate,
+                    fact.subject_entity_id,
+                    fact.object_entity_id,
+                    fact.fact_status or 'asserted'
                 ))
                 if cursor.rowcount > 0:
                     fact.fact_id = cursor.lastrowid
@@ -155,8 +160,9 @@ class KnowledgeBaseRepository:
 
         query = """
         INSERT OR IGNORE INTO facts (
-            document_id, subject, predicate, object, source_sentence, sentence_index
-        ) VALUES (?, ?, ?, ?, ?, ?);
+            document_id, subject, predicate, object, source_sentence, sentence_index,
+            canonical_predicate, subject_entity_id, object_entity_id, fact_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         """
         inserted_count = 0
         conn = self._get_connection()
@@ -169,7 +175,11 @@ class KnowledgeBaseRepository:
                         fact.predicate,
                         fact.object,
                         fact.source_sentence,
-                        fact.sentence_index
+                        fact.sentence_index,
+                        fact.canonical_predicate or fact.predicate,
+                        fact.subject_entity_id,
+                        fact.object_entity_id,
+                        fact.fact_status or 'asserted'
                     ))
                     if cursor.rowcount > 0:
                         fact.fact_id = cursor.lastrowid
@@ -194,6 +204,7 @@ class KnowledgeBaseRepository:
 
     def _row_to_fact(self, row: sqlite3.Row) -> Fact:
         """Convert a database row into a Fact model."""
+        keys = row.keys()
         return Fact(
             fact_id=row['fact_id'],
             document_id=row['document_id'],
@@ -201,7 +212,11 @@ class KnowledgeBaseRepository:
             predicate=row['predicate'],
             object=row['object'],
             source_sentence=row['source_sentence'],
-            sentence_index=row['sentence_index']
+            sentence_index=row['sentence_index'],
+            canonical_predicate=row['canonical_predicate'] if 'canonical_predicate' in keys and row['canonical_predicate'] else row['predicate'],
+            subject_entity_id=row['subject_entity_id'] if 'subject_entity_id' in keys else None,
+            object_entity_id=row['object_entity_id'] if 'object_entity_id' in keys else None,
+            fact_status=row['fact_status'] if 'fact_status' in keys and row['fact_status'] else 'asserted'
         )
 
     def get_all_facts(self, limit: Optional[int] = None, offset: int = 0) -> List[Fact]:
@@ -340,7 +355,65 @@ class KnowledgeBaseRepository:
         if facts:
             self.add_facts(facts)
 
+            # Check for speaker declaration to establish document context
+            for f in facts:
+                if f.predicate == 'has name' or f.canonical_predicate == 'has name':
+                    self.set_document_context(doc_id, speaker_name=f.object)
+                    break
+
         return (doc_id, facts)
+
+    def set_document_context(self, document_id: int, speaker_name: str, speaker_entity_id: Optional[str] = None) -> None:
+        """Record or update document speaker context in document_contexts table."""
+        if not speaker_name:
+            return
+        eid = speaker_entity_id or f"person:{speaker_name.lower().replace(' ', '_')}"
+        query = """
+        INSERT OR REPLACE INTO document_contexts (document_id, speaker_name, speaker_entity_id)
+        VALUES (?, ?, ?);
+        """
+        conn = self._get_connection()
+        try:
+            with conn:
+                conn.execute(query, (document_id, speaker_name.strip(), eid))
+        finally:
+            conn.close()
+
+    def get_document_context(self, document_id: int) -> Optional[Dict[str, Any]]:
+        """Retrieve speaker context for a specific document."""
+        query = "SELECT document_id, speaker_name, speaker_entity_id FROM document_contexts WHERE document_id = ?;"
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute(query, (document_id,))
+            row = cursor.fetchone()
+            if row:
+                return dict(row)
+            return None
+        finally:
+            conn.close()
+
+    def get_primary_speaker(self) -> Optional[str]:
+        """
+        Retrieve primary speaker across documents (latest established speaker).
+        Used to resolve first-person user queries ('Who am I?', 'Where do I live?').
+        """
+        query = "SELECT speaker_name FROM document_contexts ORDER BY context_id DESC LIMIT 1;"
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute(query)
+            row = cursor.fetchone()
+            if row and row['speaker_name']:
+                return row['speaker_name']
+            
+            # Fallback: check facts directly for 'has name' predicate
+            fallback_query = "SELECT object FROM facts WHERE LOWER(predicate) = 'has name' ORDER BY fact_id DESC LIMIT 1;"
+            cursor = conn.execute(fallback_query)
+            fb_row = cursor.fetchone()
+            if fb_row and fb_row['object']:
+                return fb_row['object']
+            return None
+        finally:
+            conn.close()
 
     # ==========================================================================
     # 5. Question History & Workspace Management
@@ -463,10 +536,14 @@ class KnowledgeBaseRepository:
                 conn.execute("DELETE FROM facts;")
                 conn.execute("DELETE FROM documents;")
                 conn.execute("DELETE FROM query_history;")
+                try:
+                    conn.execute("DELETE FROM document_contexts;")
+                except sqlite3.OperationalError:
+                    pass
 
                 # Optionally reset autoincrement sequence if sqlite_sequence exists
                 try:
-                    conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('facts', 'documents', 'query_history');")
+                    conn.execute("DELETE FROM sqlite_sequence WHERE name IN ('facts', 'documents', 'query_history', 'document_contexts');")
                 except sqlite3.OperationalError:
                     pass
 

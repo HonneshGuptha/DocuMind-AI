@@ -23,6 +23,9 @@ from .fact_extractor import (
     split_sentences
 )
 from .repository import KnowledgeBaseRepository
+from .entity_registry import Entity, EntityRegistry, GLOBAL_ENTITY_REGISTRY
+from .relationship_registry import RelationshipDefinition, RelationshipRegistry, GLOBAL_RELATIONSHIP_REGISTRY
+from .context_resolver import DocumentContext, ContextResolver, GLOBAL_CONTEXT_RESOLVER
 
 __all__ = [
     'Fact',
@@ -34,4 +37,13 @@ __all__ = [
     'KnowledgeBaseRepository',
     'init_db',
     'get_connection',
+    'Entity',
+    'EntityRegistry',
+    'GLOBAL_ENTITY_REGISTRY',
+    'RelationshipDefinition',
+    'RelationshipRegistry',
+    'GLOBAL_RELATIONSHIP_REGISTRY',
+    'DocumentContext',
+    'ContextResolver',
+    'GLOBAL_CONTEXT_RESOLVER',
 ]

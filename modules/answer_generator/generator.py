@@ -14,6 +14,7 @@ Strict Academic Constraints:
 """
 
 import html
+import re
 from typing import List, Dict, Any, Optional, Union, Tuple, Set
 from modules.question_processor.query_models import StructuredQuery, RetrievalResult
 from modules.question_processor.parser import QuestionParser
@@ -212,16 +213,73 @@ class AnswerGenerator:
         if expected_field == 'boolean':
             # e.g. "Does Canada border United States?" -> "Yes, Canada borders United States."
             # e.g. "Is Bangalore located in India?" -> "Yes, Bangalore is located in India."
+            is_speaker_query = query.subject == 'Speaker' or (isinstance(query.original_question, str) and re.search(r'\b(am\s+i|do\s+i)\b', query.original_question, re.I))
+            if is_speaker_query:
+                if pred.lower() == 'is a':
+                    article = 'an' if obj and obj[0].lower() in 'aeiou' else 'a'
+                    # If obj already starts with an article, don't double it
+                    if obj.lower().startswith(('a ', 'an ')):
+                        return f"Yes, you are {obj}."
+                    return f"Yes, you are {article} {obj}."
+                elif pred.startswith(('is ', 'was ')):
+                    return f"Yes, you {pred} {obj}."
+                else:
+                    return f"Yes, you {pred} {obj}."
+
             if pred.lower() == 'capital of':
                 return f"Yes, {subj} is the capital of {obj}."
             elif pred.lower() == 'is a':
-                return f"Yes, {subj} is a {obj}."
+                article = 'an' if obj and obj[0].lower() in 'aeiou' else 'a'
+                if obj.lower().startswith(('a ', 'an ')):
+                    return f"Yes, {subj} is {obj}."
+                return f"Yes, {subj} is {article} {obj}."
             elif ' ' in pred and not pred.startswith(('is ', 'was ')):
                 return f"Yes, {subj} is {pred} {obj}."
             elif pred.startswith(('is ', 'was ')):
                 return f"Yes, {subj} {pred} {obj}."
             else:
                 return f"Yes, {subj} {pred} {obj}."
+
+        # ----------------------------------------------------------------------
+        # Category 0: Name & Speaker Identity
+        # ----------------------------------------------------------------------
+        is_speaker_query = query.subject == 'Speaker' or (isinstance(query.original_question, str) and re.search(r'\b(my\s+name|who\s+am\s+i|where\s+do\s+i|where\s+i\s+live|do\s+i\s+study|what\s+am\s+i|where\s+do\s+i\s+work)\b', query.original_question, re.I))
+
+        if q_type == 'name':
+            if is_speaker_query:
+                return f"Your name is {obj}."
+            return f"The name of {subj} is {obj}."
+
+        # ----------------------------------------------------------------------
+        # Category 0b: Residence / Living Location
+        # ----------------------------------------------------------------------
+        elif q_type == 'residence':
+            if is_speaker_query:
+                return f"You live in {obj}."
+            return f"{subj} lives in {obj}."
+
+        # ----------------------------------------------------------------------
+        # Category 0c: Employment / Workplace
+        # ----------------------------------------------------------------------
+        elif q_type == 'employment':
+            if expected_field == 'subject':
+                # "Who works at KPMG?" -> "Honnesh works at KPMG."
+                return f"{subj} works at {obj}."
+            if is_speaker_query:
+                return f"You work at {obj}."
+            return f"{subj} works at {obj}."
+
+        # ----------------------------------------------------------------------
+        # Category 0d: Education / Studies
+        # ----------------------------------------------------------------------
+        elif q_type == 'education':
+            if is_speaker_query:
+                if pred.lower() == 'is a':
+                    return f"You are studying {obj}." if 'student' not in obj.lower() else f"You are an {obj}."
+                return f"You study at {obj}."
+            if pred.lower() == 'is a':
+                return f"{subj} is an {obj}."
+            return f"{subj} studies at {obj}."
 
         # ----------------------------------------------------------------------
         # Category 1: Capital

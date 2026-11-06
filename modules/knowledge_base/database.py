@@ -63,6 +63,15 @@ CREATE TABLE IF NOT EXISTS query_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_query_history_timestamp ON query_history(timestamp DESC);
+
+CREATE TABLE IF NOT EXISTS document_contexts (
+    context_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL,
+    speaker_name TEXT,
+    speaker_entity_id TEXT,
+    FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+    UNIQUE (document_id)
+);
 """
 
 
@@ -118,5 +127,16 @@ def init_db(db_path: Optional[str] = None) -> None:
                         object COLLATE NOCASE
                     );
                 """)
+
+            # 3. Safe idempotent column additions for extended knowledge representation
+            existing_cols = {row[1].lower() for row in conn.execute("PRAGMA table_info(facts);").fetchall()}
+            if 'canonical_predicate' not in existing_cols:
+                conn.execute("ALTER TABLE facts ADD COLUMN canonical_predicate TEXT COLLATE NOCASE;")
+            if 'subject_entity_id' not in existing_cols:
+                conn.execute("ALTER TABLE facts ADD COLUMN subject_entity_id TEXT;")
+            if 'object_entity_id' not in existing_cols:
+                conn.execute("ALTER TABLE facts ADD COLUMN object_entity_id TEXT;")
+            if 'fact_status' not in existing_cols:
+                conn.execute("ALTER TABLE facts ADD COLUMN fact_status TEXT DEFAULT 'asserted';")
     finally:
         conn.close()

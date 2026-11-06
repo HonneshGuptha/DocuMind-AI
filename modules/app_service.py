@@ -487,11 +487,16 @@ class DocuMindService:
         # Step 4: Symbolic Reasoning Integration
         # Only invoke deduction when direct facts are insufficient or query is boolean
         all_kb_facts = self.repo.get_all_facts()
+        eff_subject = query.subject
+        if eff_subject in ('Speaker', 'I', 'me'):
+            speaker = self.repo.get_primary_speaker()
+            if speaker:
+                eff_subject = speaker
 
         if query.expected_answer_field == 'boolean':
             # Boolean queries: verify if proposition holds directly or deduce via backward chaining
-            if not direct_facts and query.subject and query.predicate and query.object:
-                goal = (query.subject, query.predicate, query.object)
+            if not direct_facts and eff_subject and query.predicate and query.object:
+                goal = (eff_subject, query.predicate, query.object)
                 wm = WorkingMemory()
                 wm.load_from_kb_facts(all_kb_facts)
                 proof = backward_chain(goal, wm, rules=get_all_rules())
@@ -507,14 +512,21 @@ class DocuMindService:
             # Find an inferred fact matching the query constraints
             goal: Optional[Tuple[str, str, str]] = None
             for inf in fc_res.inferred_facts:
-                if query.subject and query.predicate:
-                    if (inf.subject.strip().lower() == query.subject.strip().lower() and
-                        inf.predicate.strip().lower() == query.predicate.strip().lower()):
+                inf_s = inf.subject.strip().lower()
+                inf_p = inf.predicate.strip().lower()
+                inf_o = inf.object.strip().lower()
+
+                subj_match = False
+                if eff_subject:
+                    subj_match = (inf_s == eff_subject.strip().lower())
+
+                if eff_subject and query.predicate:
+                    if subj_match and (inf_p == query.predicate.strip().lower() or inf_p == 'located in'):
                         goal = (inf.subject, inf.predicate, inf.object)
                         break
                 elif query.predicate and query.object:
-                    if (inf.predicate.strip().lower() == query.predicate.strip().lower() and
-                        inf.object.strip().lower() == query.object.strip().lower()):
+                    if (inf_p == query.predicate.strip().lower() and
+                        inf_o == query.object.strip().lower()):
                         goal = (inf.subject, inf.predicate, inf.object)
                         break
 

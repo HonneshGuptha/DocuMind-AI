@@ -34,10 +34,17 @@ class Fact:
     source_sentence: str
     sentence_index: int
     fact_id: Optional[int] = None
+    canonical_predicate: Optional[str] = None
+    subject_entity_id: Optional[str] = None
+    object_entity_id: Optional[str] = None
+    fact_status: str = "asserted"
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert fact to dictionary."""
-        return asdict(self)
+        d = asdict(self)
+        if not self.canonical_predicate:
+            d['canonical_predicate'] = self.predicate
+        return d
 
     @property
     def triple(self) -> tuple:

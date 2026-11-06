@@ -1,7 +1,7 @@
 """
 Deterministic Fact Extractor Module
-Extracts Subject-Predicate-Object (SPO) triples from raw text using explicit,
-rule-based regular expression patterns.
+Extracts Subject-Predicate-Object (SPO) triples from raw text using an extensible,
+rule-based pattern and relationship registry.
 
 ACADEMIC RESTRICTION COMPLIANCE:
 Strictly rule-based and deterministic.
@@ -11,8 +11,11 @@ Unsupported sentences are strictly skipped without generating fabricated facts.
 """
 
 import re
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional, Dict, Any, Set
 from .models import Fact
+from .relationship_registry import GLOBAL_RELATIONSHIP_REGISTRY, RelationshipRegistry
+from .entity_registry import GLOBAL_ENTITY_REGISTRY, EntityRegistry
+from .context_resolver import GLOBAL_CONTEXT_RESOLVER, ContextResolver, DocumentContext
 
 
 # Common English honorifics and abbreviations to protect during sentence splitting
@@ -70,11 +73,17 @@ def split_sentences(text: str) -> List[Tuple[int, str]]:
 class FactPattern:
     """Represents a deterministic extraction rule with documentation and regex."""
 
-    def __init__(self, name: str, regex: str, default_predicate: Optional[str] = None, description: str = ""):
+    def __init__(self,
+                 name: str,
+                 regex: str,
+                 default_predicate: Optional[str] = None,
+                 description: str = "",
+                 is_speaker_declaration: bool = False):
         self.name = name
         self.regex = re.compile(regex, re.IGNORECASE)
         self.default_predicate = default_predicate
         self.description = description
+        self.is_speaker_declaration = is_speaker_declaration
 
     def match(self, sentence: str) -> Optional[Tuple[str, str, str]]:
         """
@@ -86,13 +95,16 @@ class FactPattern:
             return None
 
         groups = m.groupdict()
-        subject = groups.get('subject', '').strip()
-        obj = groups.get('object', '').strip().rstrip('.!,')
+        raw_subject = (groups.get('subject') or '').strip()
+        obj = (groups.get('object') or '').strip().rstrip('.!,')
 
-        # Clean leading articles from subject if present
-        cleaned_subject = re.sub(r'^(?:The|A|An)\s+', '', subject, flags=re.IGNORECASE).strip()
-        if not cleaned_subject:
-            cleaned_subject = subject
+        # Clean leading articles from subject if present (except pronouns like 'I')
+        if raw_subject and raw_subject.lower() != 'i':
+            cleaned_subject = re.sub(r'^(?:The|A|An)\s+', '', raw_subject, flags=re.IGNORECASE).strip()
+            if not cleaned_subject:
+                cleaned_subject = raw_subject
+        else:
+            cleaned_subject = raw_subject
 
         # Determine predicate
         if self.default_predicate:
@@ -106,6 +118,10 @@ class FactPattern:
         else:
             predicate = "related to"
 
+        # Handle special speaker intro pattern without explicit subject group
+        if self.is_speaker_declaration and not cleaned_subject and obj:
+            cleaned_subject = obj  # Subject is the speaker's name, e.g. (Honnesh, has name, Honnesh)
+
         if not cleaned_subject or not obj:
             return None
 
@@ -113,7 +129,7 @@ class FactPattern:
 
 
 # ==============================================================================
-# Canonical Deterministic Factual Patterns
+# Canonical Deterministic Factual Patterns Registry
 # ==============================================================================
 FACTUAL_PATTERNS = [
     # 1. Capital of: "X is the capital of Y."
@@ -180,7 +196,64 @@ FACTUAL_PATTERNS = [
         description="Captures production relationships (e.g. Brazil produces coffee)"
     ),
 
-    # 9. Is a / Is an (Classification/Type): "X is a TYPE."
+    # 9. Speaker Name Declaration: "My name is X."
+    FactPattern(
+        name="NAME_DECLARATION",
+        regex=r'^(?:My\s+name\s+is|I\s+am\s+called|I\s+go\s+by)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="has name",
+        description="Captures speaker name declaration (e.g. My name is Honnesh)",
+        is_speaker_declaration=True
+    ),
+
+    # 10. Living / Residence: "I live in X." or "X lives in Y."
+    FactPattern(
+        name="LIVES_IN",
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:lives?|resides?|am\s+living|is\s+living|am\s+residing|is\s+residing)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="lives in",
+        description="Captures residence (e.g. I live in Bangalore / Prakruthi lives in Bengaluru)"
+    ),
+
+    # 11. Employment / Work: "I work at X." or "X works at Y."
+    FactPattern(
+        name="WORKS_AT",
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:works?|is\s+employed|am\s+employed)\s+(?:at|for|in)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="works at",
+        description="Captures workplace or employer (e.g. I work at KPMG / Honnesh works at KPMG)"
+    ),
+
+    # 12. Studies at / Education: "I study at X." or "X studies at Y."
+    FactPattern(
+        name="STUDIES_AT",
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:stud(?:y|ies)|attends?)\s+at\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="studies at",
+        description="Captures education institution (e.g. I study at RUAS / Honnesh studies at RUAS)"
+    ),
+
+    # 13. College / Institution specification: "My college is X."
+    FactPattern(
+        name="COLLEGE_IS",
+        regex=r'^(?:My|(?P<subject>[A-Za-z0-9\s\.\-]+?)[\'’]s)\s+(?:college|university|school|institution)\s+is\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="studies at",
+        description="Captures college association (e.g. My college is RUAS)"
+    ),
+
+    # 14. Student / Occupational Role: "I am an AI and ML engineering student."
+    FactPattern(
+        name="STUDENT_ROLE",
+        regex=r'^(?:(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:am|is|are|\'m))\s+(?:an?|the)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?\s+student)\.?$',
+        default_predicate="is a",
+        description="Captures student classification (e.g. I am an AI and ML engineering student)"
+    ),
+
+    # 15. Belongs To: "X belongs to Y."
+    FactPattern(
+        name="BELONGS_TO",
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+belongs?\s+to\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        default_predicate="belongs to",
+        description="Captures geopolitical or organizational belonging (e.g. Bangalore belongs to Karnataka)"
+    ),
+
+    # 16. Generic Is a / Is an (Classification/Type): "X is a TYPE."
     FactPattern(
         name="IS_A",
         regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+(?:a|an)\s+(?P<object>[a-zA-Z0-9\s\.\-]*?)\.?$',
@@ -193,19 +266,32 @@ FACTUAL_PATTERNS = [
 class FactExtractor:
     """
     Deterministic rule-based extractor that scans raw text, splits it into
-    sentences, tests each sentence against supported patterns, and produces Fact instances.
+    sentences, tests each sentence against supported patterns, resolves pronouns
+    via DocumentContext, and produces structured Fact instances.
     """
 
-    def __init__(self, patterns: Optional[List[FactPattern]] = None):
+    def __init__(self,
+                 patterns: Optional[List[FactPattern]] = None,
+                 relationship_registry: Optional[RelationshipRegistry] = None,
+                 entity_registry: Optional[EntityRegistry] = None,
+                 context_resolver: Optional[ContextResolver] = None):
         self.patterns = patterns or FACTUAL_PATTERNS
+        self.rel_registry = relationship_registry or GLOBAL_RELATIONSHIP_REGISTRY
+        self.entity_registry = entity_registry or GLOBAL_ENTITY_REGISTRY
+        self.context_resolver = context_resolver or GLOBAL_CONTEXT_RESOLVER
 
-    def extract_facts(self, raw_text: str, document_id: int) -> List[Fact]:
+    def extract_facts(self,
+                      raw_text: str,
+                      document_id: int,
+                      context: Optional[DocumentContext] = None) -> List[Fact]:
         """
-        Extract structured SPO facts from raw text for a specific document.
+        Extract structured SPO facts from raw text for a specific document with
+        speaker context and deterministic pronoun resolution.
         
         Args:
             raw_text: Raw character text extracted from document.
             document_id: Foreign key reference to documents table.
+            context: Optional pre-constructed DocumentContext.
             
         Returns:
             List of Fact instances matching supported deterministic patterns.
@@ -217,20 +303,48 @@ class FactExtractor:
         facts: List[Fact] = []
         seen_triples = set()
 
+        # Build or use existing document context (Pass 1)
+        doc_ctx = context or self.context_resolver.build_document_context(sentences, document_id)
+
+        # Pass 2: Extract factual statements with reference resolution
         for sent_idx, sentence in sentences:
-            # Test each pattern deterministically
             matched_triple = None
+            matched_pattern = None
+
             for pattern in self.patterns:
                 match_result = pattern.match(sentence)
                 if match_result:
                     matched_triple = match_result
+                    matched_pattern = pattern
                     break
 
             # If unsupported sentence, strictly skip
-            if not matched_triple:
+            if not matched_triple or not matched_pattern:
                 continue
 
             subj, pred, obj = matched_triple
+
+            # Perform reference & pronoun resolution for first-person / speaker statements
+            if matched_pattern.is_speaker_declaration:
+                # E.g. "My name is Honnesh"
+                speaker_name = obj
+                doc_ctx.set_speaker(speaker_name)
+                subj = speaker_name
+                self.entity_registry.register_entity(canonical_name=speaker_name, entity_type="Person")
+            elif subj.lower() in ('i', 'my') or subj.lower().startswith('my '):
+                resolved_subj, is_res = self.context_resolver.resolve_subject_reference(subj, doc_ctx)
+                subj = resolved_subj
+            else:
+                resolved_subj, _ = self.context_resolver.resolve_subject_reference(subj, doc_ctx)
+                subj = resolved_subj
+
+            # Clean and canonicalize predicate
+            canon_pred = self.rel_registry.get_canonical_predicate(pred)
+
+            # Auto-register recognized entities in entity registry
+            subj_entity = self.entity_registry.register_entity(canonical_name=subj)
+            obj_entity = self.entity_registry.register_entity(canonical_name=obj)
+
             triple_key = (subj.lower(), pred.lower(), obj.lower())
 
             # Avoid duplicate facts from the same sentence/document
@@ -245,7 +359,11 @@ class FactExtractor:
                     predicate=pred,
                     object=obj,
                     source_sentence=sentence,
-                    sentence_index=sent_idx
+                    sentence_index=sent_idx,
+                    canonical_predicate=canon_pred,
+                    subject_entity_id=subj_entity.entity_id if subj_entity else None,
+                    object_entity_id=obj_entity.entity_id if obj_entity else None,
+                    fact_status="asserted"
                 )
             )
 
