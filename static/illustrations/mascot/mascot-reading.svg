@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%" fill="none" class="documind-mascot mascot-reading" aria-label="DocuMind Mascot - Reading Document">
+  <defs>
+    <radialGradient id="readGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22B8CF" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#22B8CF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradRead" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#315C50"/>
+      <stop offset="100%" stop-color="#172B2A"/>
+    </linearGradient>
+    <linearGradient id="parchmentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F3EFE5"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="80" cy="85" r="58" fill="url(#readGlow)"/>
+
+  <!-- Antenna with focused probe light -->
+  <path d="M80 48 C76 30, 92 24, 94 14" stroke="#315C50" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <circle cx="94" cy="14" r="5.5" fill="#22B8CF" stroke="#172B2A" stroke-width="1.8"/>
+
+  <!-- Wings tilted downward to hold/read document -->
+  <g class="mascot-wing-left">
+    <path d="M70 72 L32 76 C32 94, 44 110, 62 118 L70 94 Z" fill="url(#parchmentGrad)" stroke="#315C50" stroke-width="1.8"/>
+  </g>
+  <g class="mascot-wing-right">
+    <path d="M90 72 L128 76 C128 94, 116 110, 98 118 L90 94 Z" fill="url(#parchmentGrad)" stroke="#315C50" stroke-width="1.8"/>
+  </g>
+
+  <!-- Central Knowledge Seed Body -->
+  <path d="M80 48 C98 48, 108 66, 106 88 C104 110, 92 124, 80 126 C68 124, 56 110, 54 88 C52 66, 62 48, 80 48 Z" fill="url(#bodyGradRead)" stroke="#172B2A" stroke-width="2.2"/>
+
+  <!-- Visor focused downward on reading -->
+  <rect x="66" y="74" width="28" height="14" rx="7" fill="#142421" stroke="#315C50" stroke-width="1.2"/>
+  <path d="M72 81 L76 83 L72 85" stroke="#22B8CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M84 81 L88 83 L84 85" stroke="#22B8CF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Scanning Beam onto Document Below -->
+  <polygon points="68,88 92,88 108,136 52,136" fill="rgba(34, 184, 207, 0.12)"/>
+
+  <!-- Open Unfolded Document in Front -->
+  <g transform="translate(48, 112)">
+    <rect x="0" y="0" width="64" height="38" rx="4" fill="#FFFEFA" stroke="#315C50" stroke-width="1.8"/>
+    <!-- Center Fold Spine -->
+    <line x1="32" y1="0" x2="32" y2="38" stroke="#D9DED4" stroke-width="1.2"/>
+    <!-- Text Lines -->
+    <line x1="6" y1="8" x2="26" y2="8" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="6" y1="16" x2="24" y2="16" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="6" y1="24" x2="20" y2="24" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="38" y1="8" x2="58" y2="8" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="38" y1="16" x2="56" y2="16" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="38" y1="24" x2="52" y2="24" stroke="#8BAE9B" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Extracted Sparkle -->
+    <circle cx="56" cy="30" r="3" fill="#E2B66F" stroke="#203B35" stroke-width="1"/>
+  </g>
+</svg>

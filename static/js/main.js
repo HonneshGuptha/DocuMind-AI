@@ -8,6 +8,75 @@
 
 let currentEvalCases = [];
 
+const MASCOT_STATES = {
+    idle: {
+        file: 'mascot-idle.svg',
+        badge: 'Archie • Ready',
+        badgeClass: 'badge-success',
+        desc: 'Deterministic Grammar Parsing + Symbolic Forward & Backward Chaining Inference.'
+    },
+    reading: {
+        file: 'mascot-reading.svg',
+        badge: 'Archie • Reading Document',
+        badgeClass: 'badge-indigo',
+        desc: 'Scanning document text and extracting structural syntax lines.'
+    },
+    processing: {
+        file: 'mascot-processing.svg',
+        badge: 'Archie • Parsing Query',
+        badgeClass: 'badge-cyan',
+        desc: 'Evaluating relational triples against deterministic grammar rules.'
+    },
+    reasoning: {
+        file: 'mascot-reasoning.svg',
+        badge: 'Archie • Deriving Proof',
+        badgeClass: 'badge-purple',
+        desc: 'Applying Modus Ponens forward chaining and Horn clause deductions.'
+    },
+    answered: {
+        file: 'mascot-answered.svg',
+        badge: 'Archie • Fact Verified',
+        badgeClass: 'badge-success',
+        desc: 'Deterministic answer derived with complete verifiable sentence provenance.'
+    },
+    unknown: {
+        file: 'mascot-unknown.svg',
+        badge: 'Archie • Open-World Unknown',
+        badgeClass: 'badge-warning',
+        desc: 'Query verified as consistent under Open-World Assumption: fact not asserted in KB.'
+    },
+    unsupported: {
+        file: 'mascot-unsupported.svg',
+        badge: 'Archie • Scope Boundary',
+        badgeClass: 'badge-danger',
+        desc: 'Input outside the 9 supported question categories or strict grammar scope.'
+    },
+    reset: {
+        file: 'mascot-reset.svg',
+        badge: 'Archie • Garden Rested',
+        badgeClass: 'badge-neutral',
+        desc: 'Workspace database purged. Knowledge base ready for new document ingestion.'
+    }
+};
+
+function setMascotState(state) {
+    const info = MASCOT_STATES[state] || MASCOT_STATES.idle;
+    const imgEl = document.getElementById('qa-mascot-avatar');
+    const badgeEl = document.getElementById('mascot-state-badge');
+    const descEl = document.getElementById('mascot-state-description');
+
+    if (imgEl) {
+        imgEl.src = `/static/illustrations/mascot/${info.file}`;
+    }
+    if (badgeEl) {
+        badgeEl.textContent = info.badge;
+        badgeEl.className = `badge ${info.badgeClass}`;
+    }
+    if (descEl) {
+        descEl.textContent = info.desc;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initMobileMenu();
@@ -125,6 +194,7 @@ function initFileUpload() {
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.add('dragover');
+            setMascotState('reading');
         });
     });
 
@@ -133,6 +203,7 @@ function initFileUpload() {
             e.preventDefault();
             e.stopPropagation();
             dropZone.classList.remove('dragover');
+            if (name === 'dragleave') setMascotState('idle');
         });
     });
 
@@ -185,6 +256,7 @@ function initFileUpload() {
         uploadSpinner.style.display = 'inline-block';
         if (uploadAlert) uploadAlert.style.display = 'none';
         if (uploadResultCard) uploadResultCard.style.display = 'none';
+        setMascotState('reading');
 
         fetch('/upload', {
             method: 'POST',
@@ -198,14 +270,17 @@ function initFileUpload() {
             if (status === 200 && body.status === 'success') {
                 renderUploadSuccess(body);
                 refreshDashboardStats();
+                setMascotState('answered');
             } else {
                 renderUploadError(body.message || 'Failed to process document.');
+                setMascotState('unsupported');
             }
         })
         .catch(err => {
             uploadSubmitBtn.disabled = false;
             uploadSpinner.style.display = 'none';
             renderUploadError(`Upload network failure: ${err.message}`);
+            setMascotState('unsupported');
         });
     });
 
@@ -302,7 +377,7 @@ function loadKnowledgeBaseFacts() {
                             <tr>
                                 <td colspan="6" class="empty-table-state">
                                     <div class="empty-state-wrap">
-                                        <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                        <img src="/static/illustrations/kb-empty.svg" alt="" class="empty-state-art" aria-hidden="true">
                                         <p>The knowledge base is currently empty. Upload documents to extract facts.</p>
                                         <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Go to Document Ingestion</button>
                                     </div>
@@ -360,6 +435,7 @@ function initQuestionAnswering() {
 
         btn.disabled = true;
         spinner.style.display = 'inline-block';
+        setMascotState('processing');
 
         fetch('/ask', {
             method: 'POST',
@@ -377,6 +453,7 @@ function initQuestionAnswering() {
         .catch(err => {
             btn.disabled = false;
             spinner.style.display = 'none';
+            setMascotState('unsupported');
             alert(`Query processing failure: ${err.message}`);
         });
     });
@@ -407,12 +484,21 @@ function renderAnswerResponse(data) {
 
     if (status === 'answered') {
         badgesEl.innerHTML += `<span class="badge badge-success">&#10003; Answered</span>`;
+        if (type === 'inferred') {
+            setMascotState('reasoning');
+            setTimeout(() => { setMascotState('answered'); }, 1200);
+        } else {
+            setMascotState('answered');
+        }
     } else if (status === 'unknown') {
         badgesEl.innerHTML += `<span class="badge badge-warning">&#9888; Unknown (Open-World)</span>`;
+        setMascotState('unknown');
     } else if (status === 'unsupported') {
         badgesEl.innerHTML += `<span class="badge badge-danger">&#10005; Out-of-Scope</span>`;
+        setMascotState('unsupported');
     } else {
         badgesEl.innerHTML += `<span class="badge badge-danger">Status: ${status}</span>`;
+        setMascotState('idle');
     }
 
     if (type === 'direct') {
@@ -688,6 +774,7 @@ function executeEvaluation() {
     spinner.style.display = 'inline-block';
     loadingState.style.display = 'block';
     resultsContainer.style.display = 'none';
+    setMascotState('processing');
 
     fetch('/api/evaluate', {
         method: 'POST'
@@ -700,14 +787,17 @@ function executeEvaluation() {
 
         if (data.status === 'success') {
             renderEvaluationDashboard(data);
+            setMascotState('answered');
         } else {
             alert('Evaluation benchmark failed to complete.');
+            setMascotState('idle');
         }
     })
     .catch(err => {
         runBtn.disabled = false;
         spinner.style.display = 'none';
         loadingState.style.display = 'none';
+        setMascotState('idle');
         alert(`Evaluation execution error: ${err.message}`);
     });
 }
@@ -872,6 +962,7 @@ function executeNukeWorkspace() {
         if (status === 200 && body.status === 'success') {
             closeNukeModal();
             showGlobalToast(body.message, 'success');
+            setMascotState('reset');
             
             // Reset all workspace views
             refreshDashboardStats();
@@ -1016,7 +1107,7 @@ function refreshDashboardStats() {
                         <tr>
                             <td colspan="6" class="empty-table-state">
                                 <div class="empty-state-wrap">
-                                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                    <img src="/static/illustrations/documents-empty.svg" alt="" class="empty-state-art" aria-hidden="true">
                                     <p>No documents uploaded yet. Upload a document to build the knowledge base.</p>
                                     <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Upload First Document</button>
                                 </div>

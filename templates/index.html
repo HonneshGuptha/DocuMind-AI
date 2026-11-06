@@ -27,7 +27,7 @@
             </svg>
         </button>
         <div class="mobile-brand">
-            <div class="brand-logo-mark">DM</div>
+            <div class="brand-logo-mark"><img src="{{ url_for('static', filename='illustrations/mascot/mascot-idle.svg') }}" alt="" class="brand-mini-mascot"></div>
             <span class="mobile-brand-title">DocuMind AI</span>
         </div>
         <div class="mobile-actions">
@@ -44,15 +44,11 @@
             <div class="sidebar-header">
                 <div class="brand-wrapper">
                     <div class="brand-logo-mark" aria-hidden="true">
-                        <svg class="icon-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
-                            <path d="M2 17l10 5 10-5"></path>
-                            <path d="M2 12l10 5 10-5"></path>
-                        </svg>
+                        <img src="{{ url_for('static', filename='illustrations/mascot/mascot-idle.svg') }}" alt="" class="brand-mini-mascot">
                     </div>
                     <div class="brand-text">
                         <div class="brand-name">DocuMind AI</div>
-                        <div class="brand-tagline">Symbolic AI Workstation</div>
+                        <div class="brand-tagline">Knowledge has a visual language.</div>
                     </div>
                 </div>
                 <div class="academic-badge-wrap">
@@ -261,71 +257,76 @@
 
                     <!-- Architecture Overview Section -->
                     <div class="card architecture-banner">
-                        <div class="arch-content">
-                            <div class="arch-badge-row">
-                                <span class="badge badge-indigo">AID201A Academic Workstation</span>
-                                <span class="badge badge-success">Classical Symbolic AI</span>
-                                <span class="badge badge-cyan">Deterministic Reasoning</span>
-                            </div>
-                            <h2 class="arch-heading">Classical Symbolic AI Architecture & Pipeline</h2>
-                            <p class="arch-text">
-                                DocuMind AI implements knowledge-based document question answering without neural embeddings,
-                                large language models, or probabilistic hallucination. Knowledge is stored as structured
-                                <strong>Subject-Predicate-Object (SPO)</strong> triples in SQLite, questions are parsed using
-                                deterministic grammar rules across <strong>9 canonical categories</strong>, and deductive inferences
-                                are generated via <strong>Modus Ponens forward chaining</strong> and <strong>goal-directed backward chaining</strong>.
-                            </p>
+                        <div class="arch-layout-wrap">
+                            <div class="arch-content">
+                                <div class="arch-badge-row">
+                                    <span class="badge badge-indigo">AID201A Academic Workstation</span>
+                                    <span class="badge badge-success">Classical Symbolic AI</span>
+                                    <span class="badge badge-cyan">Deterministic Reasoning</span>
+                                </div>
+                                <h2 class="arch-heading">Classical Symbolic AI Architecture & Pipeline</h2>
+                                <p class="arch-text">
+                                    DocuMind AI implements knowledge-based document question answering without neural embeddings,
+                                    large language models, or probabilistic hallucination. Knowledge is stored as structured
+                                    <strong>Subject-Predicate-Object (SPO)</strong> triples in SQLite, questions are parsed using
+                                    deterministic grammar rules across <strong>9 canonical categories</strong>, and deductive inferences
+                                    are generated via <strong>Modus Ponens forward chaining</strong> and <strong>goal-directed backward chaining</strong>.
+                                </p>
 
-                            <!-- Architecture Step Breakdown Grid -->
-                            <div class="arch-pipeline-grid">
-                                <div class="arch-step-box">
-                                    <div class="step-num-badge">01</div>
-                                    <div class="step-title">Document Extraction</div>
-                                    <div class="step-desc">PyMuPDF & python-docx extract plain text without neural pre-parsing.</div>
+                                <!-- Architecture Step Breakdown Grid -->
+                                <div class="arch-pipeline-grid">
+                                    <div class="arch-step-box">
+                                        <div class="step-num-badge">01</div>
+                                        <div class="step-title">Document Extraction</div>
+                                        <div class="step-desc">PyMuPDF & python-docx extract plain text without neural pre-parsing.</div>
+                                    </div>
+                                    <div class="arch-step-box">
+                                        <div class="step-num-badge">02</div>
+                                        <div class="step-title">SPO Knowledge Base</div>
+                                        <div class="step-desc">Rule-based predicate extraction storing canonical triples in SQLite.</div>
+                                    </div>
+                                    <div class="arch-step-box">
+                                        <div class="step-num-badge">03</div>
+                                        <div class="step-title">Grammar Parsing</div>
+                                        <div class="step-desc">Deterministic classification mapping queries into StructuredQuery models.</div>
+                                    </div>
+                                    <div class="arch-step-box">
+                                        <div class="step-num-badge">04</div>
+                                        <div class="step-title">Symbolic Reasoning</div>
+                                        <div class="step-desc">Forward and backward chaining with R1 to R4 production rules.</div>
+                                    </div>
+                                    <div class="arch-step-box">
+                                        <div class="step-num-badge">05</div>
+                                        <div class="step-title">Answer & Provenance</div>
+                                        <div class="step-desc">Templates synthesize verifiable answers with ground citation paths.</div>
+                                    </div>
                                 </div>
-                                <div class="arch-step-box">
-                                    <div class="step-num-badge">02</div>
-                                    <div class="step-title">SPO Knowledge Base</div>
-                                    <div class="step-desc">Rule-based predicate extraction storing canonical triples in SQLite.</div>
-                                </div>
-                                <div class="arch-step-box">
-                                    <div class="step-num-badge">03</div>
-                                    <div class="step-title">Grammar Parsing</div>
-                                    <div class="step-desc">Deterministic classification mapping queries into StructuredQuery models.</div>
-                                </div>
-                                <div class="arch-step-box">
-                                    <div class="step-num-badge">04</div>
-                                    <div class="step-title">Symbolic Reasoning</div>
-                                    <div class="step-desc">Forward and backward chaining with R1 to R4 production rules.</div>
-                                </div>
-                                <div class="arch-step-box">
-                                    <div class="step-num-badge">05</div>
-                                    <div class="step-title">Answer & Provenance</div>
-                                    <div class="step-desc">Templates synthesize verifiable answers with ground citation paths.</div>
+
+                                <div class="arch-actions">
+                                    <button class="btn btn-primary" onclick="switchTab('tab-qa')">
+                                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                        Ask DocuMind
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="switchTab('tab-documents')">
+                                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                        Upload Documents
+                                    </button>
+                                    <button class="btn btn-outline" onclick="switchTab('tab-kb')">
+                                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                        Explore KB
+                                    </button>
+                                    <button class="btn btn-outline" onclick="switchTab('tab-evaluation')">
+                                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                        Run Benchmark
+                                    </button>
+                                    <button class="btn btn-outline-cyan" onclick="openExportModal()">
+                                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                        Download Results
+                                    </button>
                                 </div>
                             </div>
-
-                            <div class="arch-actions">
-                                <button class="btn btn-primary" onclick="switchTab('tab-qa')">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                                    Ask DocuMind
-                                </button>
-                                <button class="btn btn-secondary" onclick="switchTab('tab-documents')">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                    Upload Documents
-                                </button>
-                                <button class="btn btn-outline" onclick="switchTab('tab-kb')">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
-                                    Explore KB
-                                </button>
-                                <button class="btn btn-outline" onclick="switchTab('tab-evaluation')">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                                    Run Benchmark
-                                </button>
-                                <button class="btn btn-outline-cyan" onclick="openExportModal()">
-                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                    Download Results
-                                </button>
+                            <div class="arch-illustration-box" aria-hidden="true">
+                                <img src="{{ url_for('static', filename='illustrations/dashboard-hero.svg') }}" alt="Knowledge Garden Architecture Tree" style="width: 100%; max-height: 280px; object-fit: contain;">
                             </div>
                         </div>
                     </div>
@@ -384,7 +385,7 @@
                                         <tr>
                                             <td colspan="6" class="empty-table-state">
                                                 <div class="empty-state-wrap">
-                                                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                    <img src="{{ url_for('static', filename='illustrations/documents-empty.svg') }}" alt="" class="empty-state-art" aria-hidden="true">
                                                     <p>No documents uploaded yet. Upload a document to build the knowledge base.</p>
                                                     <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Upload First Document</button>
                                                 </div>
@@ -531,7 +532,7 @@
                                         <tr>
                                             <td colspan="6" class="empty-table-state">
                                                 <div class="empty-state-wrap">
-                                                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                                    <img src="{{ url_for('static', filename='illustrations/kb-empty.svg') }}" alt="" class="empty-state-art" aria-hidden="true">
                                                     <p>The knowledge base is currently empty. Upload documents to extract facts.</p>
                                                     <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Go to Document Ingestion</button>
                                                 </div>
@@ -549,15 +550,24 @@
                 <!-- =========================================================== -->
                 <section id="tab-qa" class="tab-content">
                     <div class="card qa-hero-card">
-                        <div class="card-header-bar">
-                            <div>
-                                <h2 class="card-title">Natural Language Question Answering</h2>
-                                <p class="card-subtitle">Deterministic Grammar Parsing + Symbolic Forward & Backward Chaining Inference.</p>
+                        <!-- Archie Knowledge Companion Interactive Header -->
+                        <div class="qa-header-mascot-row">
+                            <div class="mascot-avatar-frame" id="qa-mascot-frame" aria-hidden="true">
+                                <img id="qa-mascot-avatar" class="mascot-avatar-svg" src="{{ url_for('static', filename='illustrations/mascot/mascot-idle.svg') }}" alt="Archie the Knowledge Seed Companion">
                             </div>
-                            <button class="btn btn-sm btn-outline-cyan" onclick="openExportModal()">
-                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                Download Results
-                            </button>
+                            <div class="mascot-status-info">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+                                    <h2 class="card-title" style="margin-bottom: 0;">Ask DocuMind</h2>
+                                    <span class="badge badge-success" id="mascot-state-badge">Archie &bull; Ready</span>
+                                </div>
+                                <p class="card-subtitle" id="mascot-state-description" style="margin-bottom: 0;">Deterministic Grammar Parsing + Symbolic Forward &amp; Backward Chaining Inference.</p>
+                            </div>
+                            <div style="margin-left: auto;">
+                                <button class="btn btn-sm btn-outline-cyan" onclick="openExportModal()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Download Results
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Sample Question Chips -->
@@ -724,6 +734,15 @@
 
                         <!-- Results Dashboard -->
                         <div id="eval-results-container" style="display: none;">
+                            <div class="eval-hero-banner" style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; background: var(--surface-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem;">
+                                <div style="width: 120px; height: 90px; flex-shrink: 0;" aria-hidden="true">
+                                    <img src="{{ url_for('static', filename='illustrations/eval-complete.svg') }}" alt="Empirical Benchmark Laurel" style="width: 100%; height: 100%; object-fit: contain;">
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0 0 0.25rem 0; font-family: var(--font-serif); font-size: 1.25rem;">Academic Benchmark Dossier (AID201A)</h3>
+                                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.85rem;">21/21 Canonical test scenarios evaluated across all 5 modules with strict zero-denominator N/A compliance.</p>
+                                </div>
+                            </div>
                             <!-- Metrics Grid -->
                             <div class="kpi-grid eval-kpi-grid">
                                 <div class="kpi-card highlight-card">
@@ -846,6 +865,9 @@
             </div>
 
             <div class="modal-body">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <img src="{{ url_for('static', filename='illustrations/mascot/mascot-reset.svg') }}" alt="Archie Seed Pod resting" style="width: 72px; height: 72px; margin: 0 auto;" aria-hidden="true">
+                </div>
                 <div class="warning-callout">
                     <p><strong>This action will completely delete:</strong></p>
                     <ul class="warning-list">

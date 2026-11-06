@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" width="100%" height="100%" fill="none" class="scene-illustration" aria-label="Evaluation Complete Benchmark">
+  <defs>
+    <radialGradient id="evalGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E2B66F" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#E2B66F" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="laurelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E2B66F"/>
+      <stop offset="100%" stop-color="#315C50"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="120" cy="90" r="75" fill="url(#evalGlow)"/>
+
+  <!-- Academic Balance Scales of Empirical Evaluation -->
+  <!-- Center Column -->
+  <line x1="120" y1="40" x2="120" y2="140" stroke="#203B35" stroke-width="3" stroke-linecap="round"/>
+  <!-- Base Pedestal -->
+  <path d="M96 148 L144 148 L136 140 L104 140 Z" fill="#203B35" stroke="#172B2A" stroke-width="1.8"/>
+
+  <!-- Crossbeam Pivot -->
+  <circle cx="120" cy="50" r="6" fill="#E2B66F" stroke="#203B35" stroke-width="1.8"/>
+  <line x1="60" y1="56" x2="180" y2="56" stroke="#315C50" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Left Scale Pan (Ground Knowledge) -->
+  <line x1="60" y1="56" x2="45" y2="92" stroke="#8BAE9B" stroke-width="1.4"/>
+  <line x1="60" y1="56" x2="75" y2="92" stroke="#8BAE9B" stroke-width="1.4"/>
+  <path d="M40 92 Q60 102 80 92 Z" fill="#FFFEFA" stroke="#315C50" stroke-width="1.6"/>
+  <!-- Pan Content (Document facts) -->
+  <circle cx="56" cy="88" r="4" fill="#8BAE9B"/>
+  <circle cx="64" cy="87" r="4.5" fill="#315C50"/>
+
+  <!-- Right Scale Pan (Symbolic Proofs & Metrics) -->
+  <line x1="180" y1="56" x2="165" y2="92" stroke="#8BAE9B" stroke-width="1.4"/>
+  <line x1="180" y1="56" x2="195" y2="92" stroke="#8BAE9B" stroke-width="1.4"/>
+  <path d="M160 92 Q180 102 200 92 Z" fill="#FFFEFA" stroke="#315C50" stroke-width="1.6"/>
+  <!-- Pan Content (Golden Truth Node) -->
+  <circle cx="180" cy="87" r="6" fill="#E2B66F" stroke="#203B35" stroke-width="1.4"/>
+
+  <!-- Encircling Botanical Laurel Wreath of Verification -->
+  <path d="M50 120 C30 90, 40 40, 90 28" stroke="url(#laurelGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M190 120 C210 90, 200 40, 150 28" stroke="url(#laurelGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Laurel Leaves -->
+  <circle cx="44" cy="98" r="3.5" fill="#8BAE9B"/>
+  <circle cx="36" cy="74" r="3.5" fill="#8BAE9B"/>
+  <circle cx="46" cy="52" r="3.5" fill="#E2B66F"/>
+  <circle cx="196" cy="98" r="3.5" fill="#8BAE9B"/>
+  <circle cx="204" cy="74" r="3.5" fill="#8BAE9B"/>
+  <circle cx="194" cy="52" r="3.5" fill="#E2B66F"/>
+
+  <!-- Academic 21-Case Benchmark Seal -->
+  <g transform="translate(120, 114)">
+    <circle cx="0" cy="0" r="14" fill="#236B4B" stroke="#B8DCC3" stroke-width="2"/>
+    <text x="0" y="4" font-size="9" font-family="sans-serif" font-weight="900" fill="#FFFFFF" text-anchor="middle">21/21</text>
+  </g>
+</svg>

@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="100%" height="100%" fill="none" class="documind-mascot mascot-answered" aria-label="DocuMind Mascot - Answered">
+  <defs>
+    <radialGradient id="ansGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E2B66F" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#236B4B" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#236B4B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradAns" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#315C50"/>
+      <stop offset="100%" stop-color="#172B2A"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="80" cy="85" r="70" fill="url(#ansGlow)"/>
+
+  <!-- Golden Knowledge Laurel / Crown of Blooming Leaves -->
+  <!-- Center Sprout -->
+  <path d="M80 44 C76 26, 92 18, 96 10" stroke="#315C50" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="96" cy="10" r="7" fill="#E2B66F" stroke="#172B2A" stroke-width="1.8"/>
+  <path d="M96 5 L98 9 L102 9 L99 12 L100 16 L96 13 L92 16 L93 12 L90 9 L94 9 Z" fill="#FFFFFF"/>
+
+  <!-- Left Laurel Leaf -->
+  <path d="M72 40 C60 30, 48 38, 54 48 C60 44, 68 42, 72 40 Z" fill="#E2B66F" stroke="#203B35" stroke-width="1.4"/>
+  <!-- Right Laurel Leaf -->
+  <path d="M88 40 C100 30, 112 38, 106 48 C100 44, 92 42, 88 40 Z" fill="#E2B66F" stroke="#203B35" stroke-width="1.4"/>
+
+  <!-- Elevated Open Wings (Celebratory Bloom) -->
+  <g class="mascot-wing-left">
+    <path d="M72 68 L24 46 C22 66, 32 92, 54 106 L70 90 Z" fill="#FFFEFA" stroke="#236B4B" stroke-width="2"/>
+    <circle cx="34" cy="56" r="3" fill="#E2B66F"/>
+  </g>
+  <g class="mascot-wing-right">
+    <path d="M88 68 L136 46 C138 66, 128 92, 106 106 L90 90 Z" fill="#FFFEFA" stroke="#236B4B" stroke-width="2"/>
+    <circle cx="126" cy="56" r="3" fill="#E2B66F"/>
+  </g>
+
+  <!-- Central Knowledge Seed Body -->
+  <path d="M80 46 C98 46, 108 64, 106 86 C104 108, 92 122, 80 124 C68 122, 56 108, 54 86 C52 64, 62 46, 80 46 Z" fill="url(#bodyGradAns)" stroke="#172B2A" stroke-width="2.2"/>
+
+  <!-- Happy / Verified Visor Eyes (Crescent Curves) -->
+  <rect x="66" y="72" width="28" height="14" rx="7" fill="#142421" stroke="#236B4B" stroke-width="1.4"/>
+  <path d="M71 80 Q74 76 77 80" stroke="#22B8CF" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <path d="M83 80 Q86 76 89 80" stroke="#22B8CF" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Verified Seal Medallion on Chest -->
+  <circle cx="80" cy="102" r="9" fill="#E2B66F" stroke="#172B2A" stroke-width="1.6"/>
+  <path d="M76 102 L79 105 L85 99" stroke="#172B2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Radiant Golden Sparks -->
+  <line x1="80" y1="128" x2="80" y2="136" stroke="#E2B66F" stroke-width="2" stroke-linecap="round"/>
+  <line x1="42" y1="120" x2="36" y2="126" stroke="#236B4B" stroke-width="2" stroke-linecap="round"/>
+  <line x1="118" y1="120" x2="124" y2="126" stroke="#236B4B" stroke-width="2" stroke-linecap="round"/>
+</svg>

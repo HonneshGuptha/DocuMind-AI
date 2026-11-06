@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 220" width="100%" height="100%" fill="none" class="scene-illustration" aria-label="Knowledge Garden Architecture Banner">
+  <defs>
+    <radialGradient id="gardenGlow" cx="60%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#315C50" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#172B2A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="trunkGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#203B35"/>
+      <stop offset="100%" stop-color="#416F60"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B8CCBF"/>
+      <stop offset="100%" stop-color="#8BAE9B"/>
+    </linearGradient>
+    <linearGradient id="goldNode" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F4E5C8"/>
+      <stop offset="100%" stop-color="#E2B66F"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark Atmospheric Background -->
+  <rect width="460" height="220" rx="16" fill="#172B2A"/>
+  <rect width="460" height="220" rx="16" fill="url(#gardenGlow)"/>
+
+  <!-- Subtle Constellation Grid Background -->
+  <g opacity="0.15" stroke="#8BAE9B" stroke-width="0.75" stroke-dasharray="3 6">
+    <line x1="40" y1="20" x2="40" y2="200"/>
+    <line x1="120" y1="20" x2="120" y2="200"/>
+    <line x1="200" y1="20" x2="200" y2="200"/>
+    <line x1="280" y1="20" x2="280" y2="200"/>
+    <line x1="360" y1="20" x2="360" y2="200"/>
+    <line x1="20" y1="60" x2="440" y2="60"/>
+    <line x1="20" y1="120" x2="440" y2="120"/>
+    <line x1="20" y1="180" x2="440" y2="180"/>
+  </g>
+
+  <!-- Document Ingestion Roots (Bottom Left) -->
+  <g transform="translate(48, 140)">
+    <!-- Folded Document Page 1 -->
+    <path d="M0 40 L36 10 L64 24 L28 54 Z" fill="#F3EFE5" stroke="#315C50" stroke-width="1.6"/>
+    <line x1="14" y1="36" x2="36" y2="26" stroke="#8BAE9B" stroke-width="1.2"/>
+    <line x1="18" y1="44" x2="40" y2="34" stroke="#8BAE9B" stroke-width="1.2"/>
+    <!-- Folded Document Page 2 -->
+    <path d="M24 30 L56 6 L86 20 L54 44 Z" fill="#FFFEFA" stroke="#315C50" stroke-width="1.6"/>
+    <line x1="40" y1="24" x2="62" y2="15" stroke="#416F60" stroke-width="1.2"/>
+  </g>
+
+  <!-- Growing Symbolic Knowledge Tree Trunk -->
+  <path d="M120 180 C128 140, 150 120, 180 100 C210 80, 240 70, 280 65" stroke="url(#trunkGrad)" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M180 100 C190 120, 210 135, 250 145" stroke="#315C50" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M230 78 C250 100, 290 105, 330 95" stroke="#416F60" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M280 65 C320 55, 360 60, 390 45" stroke="#8BAE9B" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Relational Vines Connecting Nodes -->
+  <line x1="180" y1="100" x2="250" y2="145" stroke="#E2B66F" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <line x1="280" y1="65" x2="330" y2="95" stroke="#22B8CF" stroke-width="1.2" stroke-dasharray="3 3"/>
+  <line x1="330" y1="95" x2="390" y2="45" stroke="#8B7CF6" stroke-width="1.4"/>
+
+  <!-- Knowledge Node 1 (Subject Fact Bloom) -->
+  <g transform="translate(180, 100)">
+    <circle cx="0" cy="0" r="14" fill="#203B35" stroke="#8BAE9B" stroke-width="2"/>
+    <circle cx="0" cy="0" r="4" fill="#E2B66F"/>
+    <!-- Foliage petal -->
+    <path d="M-8 -12 C-14 -22, -4 -24, 0 -14 Z" fill="url(#leafGrad)"/>
+    <text x="0" y="24" font-size="8.5" font-family="monospace" font-weight="700" fill="#B8CCBF" text-anchor="middle">Subject (S)</text>
+  </g>
+
+  <!-- Knowledge Node 2 (Predicate Relationship Stem) -->
+  <g transform="translate(250, 145)">
+    <rect x="-12" y="-12" width="24" height="24" rx="6" fill="#315C50" stroke="#E2B66F" stroke-width="1.8"/>
+    <text x="0" y="3" font-size="9" font-family="sans-serif" font-weight="800" fill="#F4E5C8" text-anchor="middle">&rarr;</text>
+    <text x="0" y="24" font-size="8.5" font-family="monospace" font-weight="700" fill="#E2B66F" text-anchor="middle">Predicate (P)</text>
+  </g>
+
+  <!-- Knowledge Node 3 (Object Fact Bloom) -->
+  <g transform="translate(330, 95)">
+    <circle cx="0" cy="0" r="16" fill="#203B35" stroke="#22B8CF" stroke-width="2"/>
+    <circle cx="0" cy="0" r="6" fill="#22B8CF"/>
+    <circle cx="0" cy="0" r="2.5" fill="#FFFFFF"/>
+    <text x="0" y="26" font-size="8.5" font-family="monospace" font-weight="700" fill="#22B8CF" text-anchor="middle">Object (O)</text>
+  </g>
+
+  <!-- Knowledge Node 4 (Deductive Inferred Leaf Bloom - Conclusion) -->
+  <g transform="translate(390, 45)">
+    <circle cx="0" cy="0" r="20" fill="url(#goldNode)" stroke="#172B2A" stroke-width="2"/>
+    <path d="M-6 -6 L0 -12 L6 -6 L12 0 L6 6 L0 12 L-6 6 L-12 0 Z" fill="#172B2A"/>
+    <circle cx="0" cy="0" r="3" fill="#FFFFFF"/>
+    <!-- Glowing Corona -->
+    <circle cx="0" cy="0" r="26" stroke="#E2B66F" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <text x="0" y="34" font-size="9" font-family="sans-serif" font-weight="800" fill="#F4E5C8" text-anchor="middle">Deduced Conclusion (R1)</text>
+  </g>
+
+  <!-- Archie Mascot Floating & Tending Garden (Center-Left) -->
+  <g transform="translate(76, 42) scale(0.68)">
+    <!-- Antenna -->
+    <path d="M80 50 C80 34, 96 28, 98 18" stroke="#315C50" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="98" cy="18" r="6" fill="url(#goldNode)" stroke="#203B35" stroke-width="1.8"/>
+    <!-- Wings -->
+    <path d="M72 70 L34 58 C30 76, 36 96, 52 110 L70 94 Z" fill="#FFFEFA" stroke="#315C50" stroke-width="1.8"/>
+    <path d="M88 70 L126 58 C130 76, 124 96, 108 110 L90 94 Z" fill="#FFFEFA" stroke="#315C50" stroke-width="1.8"/>
+    <!-- Body -->
+    <path d="M80 50 C98 50, 108 68, 106 90 C104 112, 92 126, 80 128 C68 126, 56 112, 54 90 C52 68, 62 50, 80 50 Z" fill="#203B35" stroke="#172B2A" stroke-width="2.2"/>
+    <!-- Visor & Eyes -->
+    <rect x="66" y="74" width="28" height="14" rx="7" fill="#142421" stroke="#315C50" stroke-width="1.2"/>
+    <circle cx="74" cy="81" r="2.5" fill="#22B8CF"/>
+    <circle cx="86" cy="81" r="2.5" fill="#22B8CF"/>
+    <circle cx="80" cy="104" r="4.5" fill="#E2B66F"/>
+  </g>
+
+  <!-- Editorial Brand Tagline Inscription -->
+  <text x="32" y="32" font-size="10" font-family="sans-serif" font-weight="700" letter-spacing="0.1em" fill="#E2B66F" text-transform="uppercase">Knowledge Garden Architecture</text>
+  <text x="32" y="46" font-size="8" font-family="sans-serif" font-style="italic" fill="#8BAE9B">&ldquo;Knowledge has a visual language.&rdquo;</text>
+</svg>
