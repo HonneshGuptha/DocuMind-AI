@@ -1,0 +1,41 @@
+# Python Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# SQLite Database files (keep schema, ignore local runtime databases)
+database/*.db
+database/*.sqlite3
+database/*.db-journal
+database/*.db-wal
+database/*.db-shm
+!database/.gitkeep
+
+# Uploaded documents (runtime directory)
+uploads/*
+!uploads/.gitkeep
+
+# Environment variables & secrets
+.env
+.env.local
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

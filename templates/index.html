@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="DocuMind AI: Academic Knowledge-Based Document Question Answering System powered by classical symbolic AI, deterministic grammar, and deductive reasoning.">
+    <title>DocuMind-AI | Classical Symbolic QA Workstation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* Hallmark: hybrid-workstation • posture: committed • tone: academic-navy */
+        :root { --color-focus: #5369D8; }
+        html, body { overflow-x: clip; }
+        :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+        button:active, .btn:active { transform: translateY(1px); }
+        button:disabled, .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    </style>
+</head>
+<body class="app-body">
+
+    <!-- Mobile Top Navigation Bar -->
+    <header class="mobile-navbar">
+        <button id="mobile-menu-toggle" class="mobile-menu-btn" aria-label="Toggle navigation menu">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        <div class="mobile-brand">
+            <div class="brand-logo-mark">DM</div>
+            <span class="mobile-brand-title">DocuMind AI</span>
+        </div>
+        <div class="mobile-actions">
+            <button class="btn btn-xs btn-outline-danger" onclick="openNukeModal()" title="Nuke Workspace Data">Nuke</button>
+            <span class="mobile-status-dot" title="Engine Online"></span>
+        </div>
+    </header>
+
+    <div class="app-layout">
+        <!-- =================================================================== -->
+        <!-- SIDEBAR NAVIGATION                                                  -->
+        <!-- =================================================================== -->
+        <aside class="app-sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <div class="brand-wrapper">
+                    <div class="brand-logo-mark" aria-hidden="true">
+                        <svg class="icon-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                            <path d="M2 17l10 5 10-5"></path>
+                            <path d="M2 12l10 5 10-5"></path>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-name">DocuMind AI</div>
+                        <div class="brand-tagline">Symbolic AI Workstation</div>
+                    </div>
+                </div>
+                <div class="academic-badge-wrap">
+                    <span class="academic-chip">AID201A &bull; MSRUAS</span>
+                </div>
+            </div>
+
+            <!-- Main Navigation Links -->
+            <nav class="sidebar-nav" aria-label="Primary Application Navigation">
+                <div class="nav-section-title">Workstation Views</div>
+                <button class="nav-item active" data-tab="tab-dashboard" id="nav-dashboard">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="9"></rect>
+                        <rect x="14" y="3" width="7" height="5"></rect>
+                        <rect x="14" y="12" width="7" height="9"></rect>
+                        <rect x="3" y="16" width="7" height="5"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </button>
+
+                <button class="nav-item" data-tab="tab-documents" id="nav-documents">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Documents</span>
+                </button>
+
+                <button class="nav-item" data-tab="tab-kb" id="nav-kb">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                    </svg>
+                    <span>Knowledge Base</span>
+                </button>
+
+                <button class="nav-item highlight-nav" data-tab="tab-qa" id="nav-qa">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                    </svg>
+                    <span>Ask DocuMind</span>
+                    <span class="nav-badge-pill">Q&A</span>
+                </button>
+
+                <button class="nav-item" data-tab="tab-evaluation" id="nav-evaluation">
+                    <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>System Evaluation</span>
+                </button>
+            </nav>
+
+            <!-- Workspace Settings & Utilities -->
+            <div class="sidebar-workspace-tools">
+                <div class="nav-section-title">Workspace Utilities</div>
+                
+                <button class="sidebar-action-btn export-action-btn" onclick="openExportModal()" title="Export Analysis Results">
+                    <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Download Results</span>
+                </button>
+
+                <button class="sidebar-action-btn nuke-action-btn" id="sidebar-nuke-btn" onclick="openNukeModal()" title="Nuke Workspace Data">
+                    <svg class="btn-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                    </svg>
+                    <span>NUKE DATA</span>
+                </button>
+            </div>
+
+            <!-- Sidebar Footer & Status -->
+            <div class="sidebar-footer">
+                <div class="engine-status-card">
+                    <div class="status-indicator-dot online"></div>
+                    <div class="status-text-wrap">
+                        <div class="status-title">Symbolic Engine Online</div>
+                        <div class="status-subtitle">R1 to R4 Rules &bull; Deterministic</div>
+                    </div>
+                </div>
+                <div class="sidebar-compliance-note">
+                    Strict classical AI: Zero NLP, zero LLMs, zero vector embeddings.
+                </div>
+            </div>
+        </aside>
+
+        <!-- =================================================================== -->
+        <!-- MAIN WORKSPACE CONTENT                                              -->
+        <!-- =================================================================== -->
+        <main class="app-main">
+
+            <!-- Top Page Header Bar -->
+            <header class="main-page-header glass-header">
+                <div class="header-titles">
+                    <h1 class="page-title" id="page-title">System Dashboard</h1>
+                    <p class="page-description" id="page-description">Overview of knowledge base contents, ingestion statistics, and deductive engine status.</p>
+                </div>
+                <div class="header-actions">
+                    <div class="download-dropdown-wrap">
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleHeaderExportDropdown(event)" id="header-download-btn">
+                            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            <span>Download Results</span>
+                            <span class="dropdown-caret">&#9660;</span>
+                        </button>
+                        <div class="dropdown-menu-card" id="header-export-menu" style="display: none;">
+                            <a href="/api/export/pdf" class="dropdown-item-link" download>
+                                <span class="export-icon-badge pdf-badge">PDF</span>
+                                <div class="export-link-text">
+                                    <strong>PDF Analysis Report</strong>
+                                    <small>Formal multi-page academic dossier</small>
+                                </div>
+                            </a>
+                            <a href="/api/export/json" class="dropdown-item-link" download>
+                                <span class="export-icon-badge json-badge">JSON</span>
+                                <div class="export-link-text">
+                                    <strong>Structured JSON Export</strong>
+                                    <small>Facts, documents, queries & metrics</small>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                    <span class="badge badge-success">&#10003; Classical AI</span>
+                    <span class="badge badge-indigo">4 Rules Active</span>
+                    <span class="badge badge-neutral">16 MB Limit</span>
+                </div>
+            </header>
+
+            <div class="page-content-wrapper">
+
+                <!-- Global Alert Notification Banner -->
+                <div id="global-alert-toast" class="alert-toast-bar" style="display: none;"></div>
+
+                <!-- =========================================================== -->
+                <!-- 1. DASHBOARD TAB                                            -->
+                <!-- =========================================================== -->
+                <section id="tab-dashboard" class="tab-content active">
+                    
+                    <!-- KPI Metric Cards Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card" tabindex="0">
+                            <div class="kpi-header">
+                                <span class="kpi-title">Registered Documents</span>
+                                <div class="kpi-icon-wrap icon-blue" aria-hidden="true">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                </div>
+                            </div>
+                            <div class="kpi-value" id="stat-total-docs">{{ stats.total_documents }}</div>
+                            <div class="kpi-footer">
+                                <span class="kpi-caption">Formats: PDF, DOCX, TXT</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card" tabindex="0">
+                            <div class="kpi-header">
+                                <span class="kpi-title">Processed Documents</span>
+                                <div class="kpi-icon-wrap icon-green" aria-hidden="true">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                            </div>
+                            <div class="kpi-value" id="stat-successful-docs">{{ stats.successful_documents }}</div>
+                            <div class="kpi-footer">
+                                <span class="kpi-caption" id="stat-failed-docs">{{ stats.failed_documents }} extraction failures</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card" tabindex="0">
+                            <div class="kpi-header">
+                                <span class="kpi-title">Knowledge Base Facts</span>
+                                <div class="kpi-icon-wrap icon-purple" aria-hidden="true">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                </div>
+                            </div>
+                            <div class="kpi-value" id="stat-total-facts">{{ stats.total_facts }}</div>
+                            <div class="kpi-footer">
+                                <span class="kpi-caption">Relational SPO Triples</span>
+                            </div>
+                        </div>
+
+                        <div class="kpi-card highlight-card" tabindex="0">
+                            <div class="kpi-header">
+                                <span class="kpi-title">Inference Rules</span>
+                                <div class="kpi-icon-wrap icon-amber" aria-hidden="true">
+                                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                </div>
+                            </div>
+                            <div class="kpi-value">4</div>
+                            <div class="kpi-footer">
+                                <span class="kpi-caption">R1, R2, R3, R4 Active</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Architecture Overview Section -->
+                    <div class="card architecture-banner">
+                        <div class="arch-content">
+                            <div class="arch-badge-row">
+                                <span class="badge badge-indigo">AID201A Academic Workstation</span>
+                                <span class="badge badge-success">Classical Symbolic AI</span>
+                                <span class="badge badge-cyan">Deterministic Reasoning</span>
+                            </div>
+                            <h2 class="arch-heading">Classical Symbolic AI Architecture & Pipeline</h2>
+                            <p class="arch-text">
+                                DocuMind AI implements knowledge-based document question answering without neural embeddings,
+                                large language models, or probabilistic hallucination. Knowledge is stored as structured
+                                <strong>Subject-Predicate-Object (SPO)</strong> triples in SQLite, questions are parsed using
+                                deterministic grammar rules across <strong>9 canonical categories</strong>, and deductive inferences
+                                are generated via <strong>Modus Ponens forward chaining</strong> and <strong>goal-directed backward chaining</strong>.
+                            </p>
+
+                            <!-- Architecture Step Breakdown Grid -->
+                            <div class="arch-pipeline-grid">
+                                <div class="arch-step-box">
+                                    <div class="step-num-badge">01</div>
+                                    <div class="step-title">Document Extraction</div>
+                                    <div class="step-desc">PyMuPDF & python-docx extract plain text without neural pre-parsing.</div>
+                                </div>
+                                <div class="arch-step-box">
+                                    <div class="step-num-badge">02</div>
+                                    <div class="step-title">SPO Knowledge Base</div>
+                                    <div class="step-desc">Rule-based predicate extraction storing canonical triples in SQLite.</div>
+                                </div>
+                                <div class="arch-step-box">
+                                    <div class="step-num-badge">03</div>
+                                    <div class="step-title">Grammar Parsing</div>
+                                    <div class="step-desc">Deterministic classification mapping queries into StructuredQuery models.</div>
+                                </div>
+                                <div class="arch-step-box">
+                                    <div class="step-num-badge">04</div>
+                                    <div class="step-title">Symbolic Reasoning</div>
+                                    <div class="step-desc">Forward and backward chaining with R1 to R4 production rules.</div>
+                                </div>
+                                <div class="arch-step-box">
+                                    <div class="step-num-badge">05</div>
+                                    <div class="step-title">Answer & Provenance</div>
+                                    <div class="step-desc">Templates synthesize verifiable answers with ground citation paths.</div>
+                                </div>
+                            </div>
+
+                            <div class="arch-actions">
+                                <button class="btn btn-primary" onclick="switchTab('tab-qa')">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                                    Ask DocuMind
+                                </button>
+                                <button class="btn btn-secondary" onclick="switchTab('tab-documents')">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                    Upload Documents
+                                </button>
+                                <button class="btn btn-outline" onclick="switchTab('tab-kb')">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                    Explore KB
+                                </button>
+                                <button class="btn btn-outline" onclick="switchTab('tab-evaluation')">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                    Run Benchmark
+                                </button>
+                                <button class="btn btn-outline-cyan" onclick="openExportModal()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                    Download Results
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Ingested Documents Table -->
+                    <div class="card">
+                        <div class="card-header-bar">
+                            <div class="header-left">
+                                <h3 class="card-title">Recent Ingested Documents</h3>
+                                <p class="card-subtitle">Processed source documents contributing ground facts to the knowledge base.</p>
+                            </div>
+                            <div class="header-right-btns">
+                                <button class="btn btn-sm btn-outline" onclick="refreshDashboardStats()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="modern-table" id="recent-docs-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">Doc ID</th>
+                                        <th>Filename</th>
+                                        <th style="width: 100px;">Format</th>
+                                        <th>Ingestion Date</th>
+                                        <th style="width: 130px;">Status</th>
+                                        <th style="width: 120px;">Facts Stored</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if stats.recent_documents %}
+                                        {% for doc in stats.recent_documents %}
+                                        <tr>
+                                            <td><code class="code-id">#{{ doc.document_id }}</code></td>
+                                            <td>
+                                                <div class="doc-file-cell">
+                                                    <span class="file-icon-badge format-{{ doc.file_format|lower }}">{{ doc.file_format }}</span>
+                                                    <span class="doc-name-text">{{ doc.filename }}</span>
+                                                </div>
+                                            </td>
+                                            <td><span class="badge badge-neutral">{{ doc.file_format }}</span></td>
+                                            <td class="text-muted"><small>{{ doc.upload_date }}</small></td>
+                                            <td>
+                                                {% if doc.extraction_status == 'success' %}
+                                                    <span class="badge badge-success">&#10003; Success</span>
+                                                {% else %}
+                                                    <span class="badge badge-danger">&#9888; {{ doc.extraction_status }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><strong>{{ doc.fact_count }}</strong> facts</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" class="empty-table-state">
+                                                <div class="empty-state-wrap">
+                                                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                                    <p>No documents uploaded yet. Upload a document to build the knowledge base.</p>
+                                                    <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Upload First Document</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================== -->
+                <!-- 2. DOCUMENT MANAGEMENT TAB                                  -->
+                <!-- =========================================================== -->
+                <section id="tab-documents" class="tab-content">
+                    <div class="card">
+                        <div class="card-header-bar">
+                            <div>
+                                <h2 class="card-title">Document Ingestion & Text Extraction</h2>
+                                <p class="card-subtitle">Module 1 Document Processor (PyMuPDF / python-docx) + Module 2 Fact Extraction.</p>
+                            </div>
+                        </div>
+
+                        <!-- Upload Zone Form -->
+                        <form id="upload-form" class="upload-area-form" enctype="multipart/form-data">
+                            <div class="modern-drop-zone" id="drop-zone" tabindex="0">
+                                <div class="drop-zone-graphic" aria-hidden="true">
+                                    <svg class="upload-cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div class="drop-zone-text-group">
+                                    <div class="drop-primary-text">Drag & drop document here, or <span class="browse-link">browse files</span></div>
+                                    <div class="drop-secondary-text">Supported formats: <strong>.PDF</strong>, <strong>.DOCX</strong>, and <strong>.TXT</strong> (Maximum size: 16 MB)</div>
+                                </div>
+                                <div class="format-pill-group">
+                                    <span class="format-pill">PDF Document</span>
+                                    <span class="format-pill">Word (.docx)</span>
+                                    <span class="format-pill">Plain Text (.txt)</span>
+                                </div>
+                                <input type="file" id="file-input" name="file" accept=".pdf,.docx,.txt" class="visually-hidden">
+                            </div>
+
+                            <div class="file-staging-bar" id="file-selected-bar" style="display: none;">
+                                <div class="staging-info">
+                                    <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                    <span class="staging-filename" id="selected-file-name"></span>
+                                    <span class="staging-filesize" id="selected-file-size"></span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline" id="clear-file-btn">Remove</button>
+                            </div>
+
+                            <div class="upload-submit-row">
+                                <button type="submit" class="btn btn-primary" id="upload-submit-btn" disabled>
+                                    <span class="spinner" id="upload-spinner" style="display: none;"></span>
+                                    <span>Upload & Ingest Document</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div id="upload-alert" class="alert-box" style="display: none;"></div>
+
+                        <!-- Extraction Results Panel -->
+                        <div id="upload-result-card" class="extraction-result-panel" style="display: none;">
+                            <div class="result-card-header">
+                                <h3 class="result-title">&#10003; Document Successfully Processed</h3>
+                                <div class="result-meta-tags" id="upload-result-meta"></div>
+                            </div>
+                            <div id="upload-preview-facts-container">
+                                <div class="preview-table-title">Extracted Ground SPO Triples:</div>
+                                <div class="table-container">
+                                    <table class="modern-table" id="upload-preview-facts-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 25%;">Subject</th>
+                                                <th style="width: 20%;">Predicate</th>
+                                                <th style="width: 25%;">Object</th>
+                                                <th>Original Source Sentence</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================== -->
+                <!-- 3. KNOWLEDGE BASE EXPLORER TAB                              -->
+                <!-- =========================================================== -->
+                <section id="tab-kb" class="tab-content">
+                    <div class="card">
+                        <div class="card-header-bar">
+                            <div>
+                                <h2 class="card-title">Knowledge Base Explorer</h2>
+                                <p class="card-subtitle">Relational Subject-Predicate-Object (SPO) triples stored in SQLite with full sentence provenance.</p>
+                            </div>
+                            <div class="kb-controls">
+                                <div class="search-input-wrap">
+                                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="text" id="kb-filter-input" class="search-input-field" placeholder="Filter facts by subject, predicate, object, or document…">
+                                </div>
+                                <button class="btn btn-sm btn-secondary" onclick="loadKnowledgeBaseFacts()">
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                                    Reload KB
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-meta-bar">
+                            <span id="kb-count-badge" class="badge badge-indigo">Loading facts…</span>
+                            <span class="table-hint">Relational SPO triples with immutable provenance records.</span>
+                        </div>
+
+                        <div class="table-container">
+                            <table class="modern-table" id="kb-facts-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 90px;">Fact ID</th>
+                                        <th style="width: 22%;">Subject</th>
+                                        <th style="width: 18%;">Predicate</th>
+                                        <th style="width: 22%;">Object</th>
+                                        <th style="width: 15%;">Document</th>
+                                        <th>Source Provenance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kb-facts-tbody">
+                                    {% if facts %}
+                                        {% for f in facts %}
+                                        <tr>
+                                            <td><code class="code-id">#{{ f.fact_id }}</code></td>
+                                            <td class="entity-subject"><strong>{{ f.subject }}</strong></td>
+                                            <td><span class="predicate-badge">{{ f.predicate }}</span></td>
+                                            <td class="entity-object"><strong>{{ f.object }}</strong></td>
+                                            <td><small class="text-muted">{{ f.filename }}</small></td>
+                                            <td><span class="source-sentence-quote">&ldquo;{{ f.source_sentence }}&rdquo;</span></td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="6" class="empty-table-state">
+                                                <div class="empty-state-wrap">
+                                                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+                                                    <p>The knowledge base is currently empty. Upload documents to extract facts.</p>
+                                                    <button class="btn btn-sm btn-primary" onclick="switchTab('tab-documents')">Go to Document Ingestion</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- =========================================================== -->
+                <!-- 4. ASK DOCUMIND (QA & REASONING) TAB                        -->
+                <!-- =========================================================== -->
+                <section id="tab-qa" class="tab-content">
+                    <div class="card qa-hero-card">
+                        <div class="card-header-bar">
+                            <div>
+                                <h2 class="card-title">Natural Language Question Answering</h2>
+                                <p class="card-subtitle">Deterministic Grammar Parsing + Symbolic Forward & Backward Chaining Inference.</p>
+                            </div>
+                            <button class="btn btn-sm btn-outline-cyan" onclick="openExportModal()">
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                Download Results
+                            </button>
+                        </div>
+
+                        <!-- Sample Question Chips -->
+                        <div class="sample-chips-container">
+                            <div class="chips-label">Sample Questions by Category:</div>
+                            <div class="chips-scroll-group">
+                                <button type="button" class="chip-item" onclick="setQuery('What is the capital of Japan?')">
+                                    <span class="chip-tag tag-direct">Direct</span> What is the capital of Japan?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('Where is Bangalore located?')">
+                                    <span class="chip-tag tag-inferred">Inferred (R1)</span> Where is Bangalore located?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('Does Canada border United States?')">
+                                    <span class="chip-tag tag-boolean">Boolean</span> Does Canada border United States?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('When was Stanford University established?')">
+                                    <span class="chip-tag tag-direct">Establishment</span> When was Stanford University established?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('Who developed Python?')">
+                                    <span class="chip-tag tag-direct">Creator</span> Who developed Python?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('What is Python?')">
+                                    <span class="chip-tag tag-direct">Classification</span> What is Python?
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('Where is Atlantis located?')">
+                                    <span class="chip-tag tag-unknown">Open-World</span> Where is Atlantis located? (Unknown)
+                                </button>
+                                <button type="button" class="chip-item" onclick="setQuery('Why is the sky blue?')">
+                                    <span class="chip-tag tag-unsupported">Out-of-Scope</span> Why is the sky blue? (Unsupported)
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Query Input Form -->
+                        <form id="ask-form" class="qa-form">
+                            <div class="query-input-bar">
+                                <div class="query-icon-wrap" aria-hidden="true">
+                                    <svg class="search-query-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                </div>
+                                <input type="text" id="question-input" class="qa-input-field" placeholder="Ask a factual question (e.g., 'What is the capital of Japan?' or 'Where is Bangalore located?')" required autocomplete="off">
+                                <button type="submit" class="btn btn-primary qa-submit-btn" id="ask-btn">
+                                    <span class="spinner" id="ask-spinner" style="display: none;"></span>
+                                    <span>Ask DocuMind</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Answer Presentation Area -->
+                        <div id="answer-container" class="answer-display-area" style="display: none;">
+                            
+                            <!-- Hero Answer Banner Panel -->
+                            <div class="hero-answer-panel" id="hero-answer-card">
+                                <div class="answer-top-bar">
+                                    <div class="answer-badges-group" id="answer-status-badges"></div>
+                                    <div class="answer-telemetry" id="answer-latency"></div>
+                                </div>
+                                <div class="answer-core-content">
+                                    <div class="answer-label-text">DocuMind Answer:</div>
+                                    <div class="answer-highlight-text" id="answer-text"></div>
+                                </div>
+                                <div class="query-audit-strip" id="parsed-query-bar"></div>
+                            </div>
+
+                            <!-- Structured Reasoning & Provenance (Vertical Animated Timeline) -->
+                            <div class="reasoning-timeline-panel">
+                                <div class="timeline-header">
+                                    <h3 class="timeline-title">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                                        Symbolic Reasoning & Provenance Derivation
+                                    </h3>
+                                    <span class="timeline-subtitle">Step-by-step classical deductive inference trace</span>
+                                </div>
+
+                                <div class="timeline-steps" id="reasoning-steps-container">
+                                    <!-- Populated dynamically via JS with sequential animated steps -->
+                                </div>
+
+                                <!-- Ground Supporting Facts Evidence Table -->
+                                <div id="supporting-facts-box" class="supporting-facts-panel" style="display: none;">
+                                    <div class="evidence-panel-title">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                                        Supporting Ground Knowledge Base Facts:
+                                    </div>
+                                    <div class="table-container">
+                                        <table class="modern-table" id="supporting-facts-table">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 80px;">Fact ID</th>
+                                                    <th>Subject</th>
+                                                    <th>Predicate</th>
+                                                    <th>Object</th>
+                                                    <th>Source Document</th>
+                                                    <th>Original Source Sentence</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Collapsible Full Explanation Audit Report -->
+                                <div class="explanation-accordion-wrap">
+                                    <button type="button" class="accordion-toggle-btn" id="explanation-toggle-btn" onclick="toggleExplanationDetails()">
+                                        <span>Full Verifiable Explanation Report</span>
+                                        <span id="explanation-arrow">&#9660;</span>
+                                    </button>
+                                    <div id="explanation-details-panel" class="accordion-inner-panel" style="display: none;">
+                                        <pre id="explanation-text" class="explanation-code-block"></pre>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Recent Question History Drawer / Section -->
+                        <div class="query-history-section" id="query-history-container">
+                            <div class="history-header-bar">
+                                <h3 class="history-title">
+                                    <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                    Session Interaction History
+                                </h3>
+                                <button class="btn btn-xs btn-outline" onclick="loadQuestionHistory()">Refresh History</button>
+                            </div>
+                            <div class="history-list" id="query-history-list">
+                                <div class="history-empty-placeholder">No interactions recorded in this workspace session yet.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- =========================================================== -->
+                <!-- 5. SYSTEM EVALUATION TAB                                    -->
+                <!-- =========================================================== -->
+                <section id="tab-evaluation" class="tab-content">
+                    <div class="eval-dashboard-container">
+                        <div class="card-header-bar">
+                            <div>
+                                <h2 class="card-title">Empirical Benchmark & Evaluation</h2>
+                                <p class="card-subtitle">Module 5 Stage 3 Evaluation Framework (21 Canonical Test Scenarios Across Modules 1 to 5).</p>
+                            </div>
+                            <button class="btn btn-primary" id="run-eval-btn" onclick="executeEvaluation()">
+                                <span class="spinner" id="eval-spinner" style="display: none;"></span>
+                                <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <span>Run Full Benchmark</span>
+                            </button>
+                        </div>
+
+                        <div class="notice-callout">
+                            <div class="callout-icon">&#9878;</div>
+                            <div class="callout-text">
+                                <strong>Academic Rigor & Evaluation Standards:</strong>
+                                This evaluation benchmarks answer accuracy, retrieval precision/recall/F1, reasoning fidelity, and source provenance.
+                                Denominators with zero cases or empty retrievals strictly follow the <em>N/A</em> convention rather than substituting false metrics.
+                            </div>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="eval-loading-state" class="eval-loading-panel" style="display: none;">
+                            <div class="large-pulse-spinner"></div>
+                            <h3 class="loading-title">Executing Complete 21-Case Benchmark…</h3>
+                            <p class="loading-subtitle">Benchmarking classification, retrieval, forward chaining, backward chaining, answer generation, and provenance tracking.</p>
+                        </div>
+
+                        <!-- Results Dashboard -->
+                        <div id="eval-results-container" style="display: none;">
+                            <!-- Metrics Grid -->
+                            <div class="kpi-grid eval-kpi-grid">
+                                <div class="kpi-card highlight-card">
+                                    <div class="kpi-header"><span class="kpi-title">Overall Pipeline Success</span></div>
+                                    <div class="kpi-value" id="eval-success-rate">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption" id="eval-cases-count">--</span></div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-header"><span class="kpi-title">Answer Accuracy</span></div>
+                                    <div class="kpi-value" id="eval-answer-acc">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption">Status & Exact Match</span></div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-header"><span class="kpi-title">Retrieval Macro F1</span></div>
+                                    <div class="kpi-value" id="eval-retrieval-f1">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption" id="eval-retrieval-pr">--</span></div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-header"><span class="kpi-title">Reasoning Accuracy</span></div>
+                                    <div class="kpi-value" id="eval-reasoning-acc">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption" id="eval-rule-prec">--</span></div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-header"><span class="kpi-title">Provenance Fidelity</span></div>
+                                    <div class="kpi-value" id="eval-provenance-acc">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption">100% Anti-Fabrication</span></div>
+                                </div>
+                                <div class="kpi-card">
+                                    <div class="kpi-header"><span class="kpi-title">Average Latency</span></div>
+                                    <div class="kpi-value" id="eval-latency">--</div>
+                                    <div class="kpi-footer"><span class="kpi-caption" id="eval-total-time">--</span></div>
+                                </div>
+                            </div>
+
+                            <!-- Individual Test Cases Breakdown -->
+                            <div class="eval-cases-section">
+                                <div class="card-header-bar">
+                                    <div>
+                                        <h3 class="card-title">Benchmark Case-by-Case Breakdown</h3>
+                                        <p class="card-subtitle">Granular evaluation of all 21 canonical scenarios.</p>
+                                    </div>
+                                    <div class="filter-btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline active" onclick="filterEvalCases('all')">All (21)</button>
+                                        <button type="button" class="btn btn-sm btn-outline" onclick="filterEvalCases('pass')">Passed</button>
+                                        <button type="button" class="btn btn-sm btn-outline" onclick="filterEvalCases('fail')">Failed</button>
+                                    </div>
+                                </div>
+                                <div class="table-container">
+                                    <table class="modern-table" id="eval-cases-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 80px;">Case ID</th>
+                                                <th style="width: 140px;">Category</th>
+                                                <th>Query Question</th>
+                                                <th style="width: 120px;">Actual Status</th>
+                                                <th style="width: 120px;">Expected</th>
+                                                <th style="width: 100px;">Rules Fired</th>
+                                                <th style="width: 90px;">Latency</th>
+                                                <th style="width: 100px;">Outcome</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="eval-cases-tbody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Publication Markdown Report Panel -->
+                            <div class="report-container-panel">
+                                <div class="report-header-toggle" onclick="toggleReportAccordion()">
+                                    <div class="report-title-group">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                        <span class="report-title">Formal Academic Evaluation Report (Markdown)</span>
+                                    </div>
+                                    <div class="accordion-arrow" id="accordion-toggle-icon">&#9660;</div>
+                                </div>
+                                <div id="report-accordion-body" class="report-body-panel" style="display: none;">
+                                    <div class="report-toolbar">
+                                        <button type="button" class="btn btn-sm btn-outline" onclick="copyReportMarkdown()">Copy Markdown</button>
+                                    </div>
+                                    <pre id="eval-report-pre" class="markdown-preview-block"></pre>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Page Footer -->
+            <footer class="main-page-footer">
+                <div class="footer-left">
+                    <span>DocuMind-AI &bull; Knowledge-Based Document Question Answering System</span>
+                </div>
+                <div class="footer-right">
+                    <span>AID201A Artificial Intelligence &bull; M S Ramaiah University of Applied Sciences</span>
+                </div>
+            </footer>
+        </main>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- NUKE DATA SAFETY CONFIRMATION MODAL                                     -->
+    <!-- ======================================================================= -->
+    <div class="modal-backdrop" id="nuke-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="nuke-modal-title">
+        <div class="modal-window hazard-theme">
+            <div class="modal-header">
+                <div class="modal-hazard-badge">
+                    <svg class="icon-hazard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="modal-title-wrap">
+                    <h2 class="modal-title" id="nuke-modal-title">Nuke Workspace Data</h2>
+                    <p class="modal-subtitle">Permanent, irreversible workspace purge.</p>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeNukeModal()" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="warning-callout">
+                    <p><strong>This action will completely delete:</strong></p>
+                    <ul class="warning-list">
+                        <li>All uploaded document files inside the <code>uploads/</code> storage folder.</li>
+                        <li>All registered document records in SQLite.</li>
+                        <li>All extracted Knowledge Base Subject-Predicate-Object (SPO) facts.</li>
+                        <li>All persisted question-answering history and telemetry.</li>
+                    </ul>
+                    <p class="warning-sub">System architecture, code, schema, inference rules, and benchmark datasets will be preserved.</p>
+                </div>
+
+                <div class="workflow-hint-bar">
+                    <span class="hint-tag">RECOMMENDED WORKFLOW</span>
+                    <span>Download Results &rarr; Nuke Data &rarr; Start Fresh</span>
+                </div>
+
+                <div class="nuke-confirm-group">
+                    <label for="nuke-confirm-input" class="nuke-input-label">
+                        Type <code class="code-danger">DELETE</code> below to confirm permanent workspace reset:
+                    </label>
+                    <input type="text" id="nuke-confirm-input" class="nuke-input-field" placeholder="Type DELETE to confirm" autocomplete="off" oninput="handleNukeInput(this.value)">
+                </div>
+
+                <div id="nuke-status-msg" class="nuke-msg-area" style="display: none;"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeNukeModal()">Cancel</button>
+                <button type="button" class="btn btn-danger" id="nuke-execute-btn" disabled onclick="executeNukeWorkspace()">
+                    <span class="spinner" id="nuke-spinner" style="display: none;"></span>
+                    <span>NUKE DATA NOW</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- DOWNLOAD RESULTS MODAL                                                  -->
+    <!-- ======================================================================= -->
+    <div class="modal-backdrop" id="export-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="export-modal-title">
+        <div class="modal-window export-theme">
+            <div class="modal-header">
+                <div class="modal-icon-badge icon-indigo">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </div>
+                <div class="modal-title-wrap">
+                    <h2 class="modal-title" id="export-modal-title">Download Workspace Results</h2>
+                    <p class="modal-subtitle">Export comprehensive factual analysis, provenance traces, and evaluation reports.</p>
+                </div>
+                <button type="button" class="modal-close-btn" onclick="closeExportModal()" aria-label="Close modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="export-options-grid">
+                    
+                    <a href="/api/export/pdf" class="export-card-link" download onclick="closeExportModal()">
+                        <div class="export-card-icon icon-red">
+                            <span class="format-badge-large">PDF</span>
+                        </div>
+                        <div class="export-card-info">
+                            <h3 class="export-card-title">Academic PDF Report</h3>
+                            <p class="export-card-desc">Formal multi-page document with executive summary, document tables, SPO facts, reasoning traces, and empirical benchmark matrices.</p>
+                            <span class="export-file-spec">Formatted for academic submission (AID201A)</span>
+                        </div>
+                        <div class="export-arrow">&rarr;</div>
+                    </a>
+
+                    <a href="/api/export/json" class="export-card-link" download onclick="closeExportModal()">
+                        <div class="export-card-icon icon-cyan">
+                            <span class="format-badge-large">JSON</span>
+                        </div>
+                        <div class="export-card-info">
+                            <h3 class="export-card-title">Structured JSON Export</h3>
+                            <p class="export-card-desc">Complete machine-readable dump containing documents, relational facts, questions, answers, supporting IDs, inference traces, and raw evaluation telemetry.</p>
+                            <span class="export-file-spec">Valid UTF-8 JSON dataset</span>
+                        </div>
+                        <div class="export-arrow">&rarr;</div>
+                    </a>
+
+                </div>
+
+                <div class="workflow-hint-bar" style="margin-top: 1.25rem;">
+                    <span class="hint-tag">AUDIT INTEGRITY</span>
+                    <span>All exports retain exact verbatim source sentences and rule IDs. Zero neural hallucinations.</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeExportModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
