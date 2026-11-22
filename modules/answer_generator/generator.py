@@ -33,6 +33,18 @@ RULE_DISPLAY_NAMES = {
     'R3_PART_WHOLE_TRANSITIVITY': 'Part-Whole Transitivity Rule',
     'R4': 'Border Symmetry Rule',
     'R4_BORDER_SYMMETRY': 'Border Symmetry Rule',
+    'R5': 'City Location Rule',
+    'R5_CITY_LOCATION': 'City Location Rule',
+    'R6': 'State Location Rule',
+    'R6_STATE_LOCATION': 'State Location Rule',
+    'R7': 'Country Location Rule',
+    'R7_COUNTRY_LOCATION': 'Country Location Rule',
+    'R8': 'City-State Location Rule',
+    'R8_CITY_STATE_LOCATION': 'City-State Location Rule',
+    'R9': 'State-Continent Location Rule',
+    'R9_STATE_CONTINENT_LOCATION': 'State-Continent Location Rule',
+    'R10': 'City-Continent Location Rule',
+    'R10_CITY_CONTINENT_LOCATION': 'City-Continent Location Rule',
 }
 
 
@@ -243,7 +255,7 @@ class AnswerGenerator:
         # ----------------------------------------------------------------------
         # Category 0: Name & Speaker Identity
         # ----------------------------------------------------------------------
-        is_speaker_query = query.subject == 'Speaker' or (isinstance(query.original_question, str) and re.search(r'\b(my\s+name|who\s+am\s+i|where\s+do\s+i|where\s+i\s+live|do\s+i\s+study|what\s+am\s+i|where\s+do\s+i\s+work)\b', query.original_question, re.I))
+        is_speaker_query = query.subject == 'Speaker' or (isinstance(query.original_question, str) and re.search(r'\b(my\s+name|who\s+am\s+i|where\s+do\s+i|where\s+i\s+live|do\s+i\s+study|what\s+am\s+i|what\s+student\s+am\s+i|my\s+identity|where\s+do\s+i\s+work)\b', query.original_question, re.I))
 
         if q_type == 'name':
             if is_speaker_query:
@@ -254,6 +266,12 @@ class AnswerGenerator:
         # Category 0b: Residence / Living Location
         # ----------------------------------------------------------------------
         elif q_type == 'residence':
+            if expected_field == 'subject':
+                unique_subjects = list(dict.fromkeys(f.subject for f in all_facts if getattr(f, 'subject', None)))
+                if len(unique_subjects) > 1:
+                    subj_str = ", ".join(unique_subjects[:-1]) + f" and {unique_subjects[-1]}"
+                    return f"{subj_str} live in {obj}."
+                return f"{subj} lives in {obj}."
             if is_speaker_query:
                 return f"You live in {obj}."
             return f"{subj} lives in {obj}."
@@ -264,6 +282,10 @@ class AnswerGenerator:
         elif q_type == 'employment':
             if expected_field == 'subject':
                 # "Who works at KPMG?" -> "Honnesh works at KPMG."
+                unique_subjects = list(dict.fromkeys(f.subject for f in all_facts if getattr(f, 'subject', None)))
+                if len(unique_subjects) > 1:
+                    subj_str = ", ".join(unique_subjects[:-1]) + f" and {unique_subjects[-1]}"
+                    return f"{subj_str} work at {obj}."
                 return f"{subj} works at {obj}."
             if is_speaker_query:
                 return f"You work at {obj}."
@@ -273,6 +295,13 @@ class AnswerGenerator:
         # Category 0d: Education / Studies
         # ----------------------------------------------------------------------
         elif q_type == 'education':
+            if expected_field == 'subject':
+                # "Who studies at RUAS?" -> "Honnesh studies at RUAS."
+                unique_subjects = list(dict.fromkeys(f.subject for f in all_facts if getattr(f, 'subject', None)))
+                if len(unique_subjects) > 1:
+                    subj_str = ", ".join(unique_subjects[:-1]) + f" and {unique_subjects[-1]}"
+                    return f"{subj_str} study at {obj}."
+                return f"{subj} studies at {obj}."
             if is_speaker_query:
                 if pred.lower() == 'is a':
                     return f"You are studying {obj}." if 'student' not in obj.lower() else f"You are an {obj}."
@@ -372,8 +401,17 @@ class AnswerGenerator:
         # ----------------------------------------------------------------------
         elif q_type == 'classification':
             # "What is Python?" -> "Python is a programming language."
+            # "What am I?" -> "You are a computer science student."
+            if is_speaker_query:
+                article = 'an' if obj and obj[0].lower() in 'aeiou' else 'a'
+                if obj.lower().startswith(('a ', 'an ')):
+                    return f"You are {obj}."
+                return f"You are {article} {obj}."
             if pred.lower() == 'is a':
-                return f"{subj} is a {obj}."
+                article = 'an' if obj and obj[0].lower() in 'aeiou' else 'a'
+                if obj.lower().startswith(('a ', 'an ')):
+                    return f"{subj} is {obj}."
+                return f"{subj} is {article} {obj}."
             elif pred.lower() in ('part of', 'is part of'):
                 return f"{subj} is part of {obj}."
             elif pred.startswith(('is ', 'was ')):
@@ -399,11 +437,12 @@ class AnswerGenerator:
 
         # Check single-valued relations: capital, establishment year
         if query.question_type in ('capital', 'establishment'):
-            unique_objects = set()
-            for f in facts:
-                unique_objects.add(str(f.object).strip().lower())
+            if query.expected_answer_field == 'subject':
+                unique_values = {str(getattr(f, 'subject', '')).strip().lower() for f in facts if getattr(f, 'subject', None)}
+            else:
+                unique_values = {str(getattr(f, 'object', '')).strip().lower() for f in facts if getattr(f, 'object', None)}
 
-            if len(unique_objects) > 1:
+            if len(unique_values) > 1:
                 conflict_items = []
                 for f in facts:
                     fid = getattr(f, 'fact_id', '?')

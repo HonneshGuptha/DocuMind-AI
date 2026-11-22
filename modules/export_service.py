@@ -387,10 +387,20 @@ class PDFReportBuilder:
         p = self.current_page
 
         def fmt_pct(val):
-            if val is None or val == 'N/A':
+            if val is None or val == 'N/A' or val == '':
                 return "N/A"
             try:
-                return f"{float(val) * 100:.1f}%"
+                if isinstance(val, str) and val.endswith('%'):
+                    val = val[:-1].strip()
+                v = float(val)
+                # If value is already in percentage scale (> 1.0, e.g. 100.0, 95.0),
+                # do not multiply by 100 again.
+                # If value is in fractional scale [0.0, 1.0] (e.g. 1.0, 0.938, 0.5),
+                # multiply by 100 to convert to percentage exactly once.
+                if v > 1.0:
+                    return f"{v:.1f}%"
+                else:
+                    return f"{v * 100.0:.1f}%"
             except Exception:
                 return str(val)
 

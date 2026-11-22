@@ -33,11 +33,99 @@ ABBREVIATIONS = [
     (r'\bU\.K\.', '___UK_DOT___', 'U.K.'),
 ]
 
+# Connecting words that indicate intra-sentence line continuation in wrapped documents (e.g., PyMuPDF output)
+CONNECTING_WORDS: Set[str] = {
+    'in', 'at', 'on', 'of', 'to', 'for', 'with', 'by', 'from',
+    'is', 'are', 'was', 'were', 'the', 'a', 'an', 'and', 'or', 'i'
+}
+
+# Known initial words of multi-word named entities frequently split across lines
+MULTIWORD_FIRST_TOKENS: Set[str] = {
+    'tamil', 'new', 'national', 'tech', 'research', 'city', 'abc'
+}
+
+
+def normalize_document_linebreaks(text: str) -> str:
+    """
+    Normalizes intra-sentence visual line breaks produced by document extractors (such as PyMuPDF)
+    while preserving genuine sentence boundaries, paragraph breaks, and numbered section headers.
+
+    Deterministic heuristic:
+    1. Unifies CRLF/CR to LF.
+    2. Identifies line continuations:
+       - If current line ends with a hyphen (word split across lines), merge without space.
+       - If current line does not end with terminal punctuation (. ! ?):
+         * Next line starts with a lowercase letter.
+         * Next line starts with standalone pronoun 'I' followed by a verb (e.g., 'I work').
+         * Current line ends with a connecting word (preposition, conjunction, auxiliary).
+         * Current line ends with a known multi-word entity token (e.g. 'Tamil', 'New').
+       Merge these continuations with a single space.
+    3. Preserves terminal punctuation boundaries, blank line paragraph separators, and numbered headers.
+    """
+    if not text:
+        return ""
+
+    normalized = text.replace('\r\n', '\n').replace('\r', '\n')
+    lines = normalized.split('\n')
+    merged_lines: List[str] = []
+
+    i = 0
+    while i < len(lines):
+        line = lines[i].rstrip()
+        if not line:
+            merged_lines.append("")
+            i += 1
+            continue
+
+        while i + 1 < len(lines):
+            next_line = lines[i + 1].strip()
+            if not next_line:
+                break
+
+            # Preserve explicit numbered section headers e.g. "1. Personal and Academic Profile"
+            if re.match(r'^\d+\.\s+[A-Z]', next_line):
+                break
+
+            line_tokens = line.split()
+            last_token = line_tokens[-1].lower().rstrip('.,;:!?') if line_tokens else ''
+            first_next_char = next_line[0] if next_line else ''
+
+            is_continuation = False
+
+            # Case A: Current line ends with hyphen
+            if line.endswith('-'):
+                line = line[:-1] + next_line
+                i += 1
+                continue
+
+            # Case B: Current line does NOT end with sentence terminal punctuation (. ! ?)
+            if not line.endswith(('.', '!', '?')):
+                if first_next_char.islower():
+                    is_continuation = True
+                elif next_line.startswith(('I ', 'i ')):
+                    is_continuation = True
+                elif last_token in CONNECTING_WORDS:
+                    is_continuation = True
+                elif last_token in MULTIWORD_FIRST_TOKENS:
+                    is_continuation = True
+
+            if is_continuation:
+                line = line + " " + next_line
+                i += 1
+            else:
+                break
+
+        merged_lines.append(line)
+        i += 1
+
+    return '\n'.join(merged_lines)
+
 
 def split_sentences(text: str) -> List[Tuple[int, str]]:
     """
     Deterministically split raw text into sentences while tracking sentence indices.
-    Protects common abbreviations and handles universal linebreaks.
+    Normalizes intra-sentence visual line breaks, protects common abbreviations and
+    numbered section headings, and splits on genuine sentence terminals.
     
     Returns:
         List of tuples: (sentence_index, clean_sentence)
@@ -45,12 +133,17 @@ def split_sentences(text: str) -> List[Tuple[int, str]]:
     if not text or not text.strip():
         return []
 
-    processed = text
-    # 1. Protect abbreviations
+    # 1. Normalize linebreaks from visual wrapping
+    processed = normalize_document_linebreaks(text)
+
+    # 2. Protect abbreviations
     for pattern, placeholder, _ in ABBREVIATIONS:
         processed = re.sub(pattern, placeholder, processed, flags=re.IGNORECASE)
 
-    # 2. Split on sentence terminal punctuation (. ? !) followed by whitespace or linebreaks
+    # 3. Protect numbered headers at start of lines e.g. "1. Personal and Academic Profile"
+    processed = re.sub(r'(?m)^(\d+)\.\s+', r'\1___DOT_NUM___ ', processed)
+
+    # 4. Split on sentence terminal punctuation (. ? !) followed by whitespace or linebreaks
     raw_sentences = re.split(r'(?<=[.!?])(?:\s+|\n+)|(?:\r?\n)+', processed)
 
     sentences = []
@@ -63,6 +156,9 @@ def split_sentences(text: str) -> List[Tuple[int, str]]:
         # Restore abbreviation original text
         for _, placeholder, original in ABBREVIATIONS:
             clean = clean.replace(placeholder, original)
+
+        # Restore numbered headers
+        clean = clean.replace('___DOT_NUM___', '.')
 
         sentences.append((sentence_idx, clean))
         sentence_idx += 1
@@ -123,6 +219,12 @@ class FactPattern:
             cleaned_subject = obj  # Subject is the speaker's name, e.g. (Honnesh, has name, Honnesh)
 
         if not cleaned_subject or not obj:
+            return None
+
+        # Guard against incomplete trailing preposition fragments (e.g., from unmerged visual line breaks)
+        trailing_preps = {'in', 'at', 'on', 'of', 'to', 'for', 'with', 'by', 'from'}
+        obj_tokens = obj.lower().split()
+        if obj_tokens and obj_tokens[-1] in trailing_preps:
             return None
 
         return (cleaned_subject, predicate, obj)

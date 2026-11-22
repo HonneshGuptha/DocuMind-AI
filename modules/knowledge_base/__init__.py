@@ -20,7 +20,8 @@ from .fact_extractor import (
     FactExtractor,
     FactPattern,
     FACTUAL_PATTERNS,
-    split_sentences
+    split_sentences,
+    normalize_document_linebreaks
 )
 from .repository import KnowledgeBaseRepository
 from .entity_registry import Entity, EntityRegistry, GLOBAL_ENTITY_REGISTRY
@@ -34,6 +35,7 @@ __all__ = [
     'FactPattern',
     'FACTUAL_PATTERNS',
     'split_sentences',
+    'normalize_document_linebreaks',
     'KnowledgeBaseRepository',
     'init_db',
     'get_connection',

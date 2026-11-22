@@ -14,6 +14,7 @@ Zero NLP, zero LLMs, zero vector embeddings, zero probabilistic hallucinations.
 """
 
 import os
+import re
 import time
 import uuid
 from typing import Dict, Any, List, Optional, Tuple, Union
@@ -23,6 +24,7 @@ from modules.document_processor import extract_document, DocumentContent
 from modules.knowledge_base.database import init_db
 from modules.knowledge_base.models import Fact as KBF, DocumentRecord
 from modules.knowledge_base.repository import KnowledgeBaseRepository
+from modules.knowledge_base.entity_registry import GLOBAL_ENTITY_REGISTRY
 from modules.question_processor.classifier import QuestionClassifier
 from modules.question_processor.parser import QuestionParser
 from modules.question_processor.query_models import StructuredQuery, RetrievalResult
@@ -65,6 +67,76 @@ def normalize_filename(filename: Optional[str]) -> str:
         if not cleaned:
             break
     return name
+
+
+def entity_matches_scope(entity_name: str, scope: str, kb_facts: List[Any], entity_reg) -> bool:
+    """
+    Deterministically check whether an entity matches a requested geographical scope
+    (country, continent, state, city) using canonical registry types, standard ontology,
+    and relational deduction from KB facts.
+    """
+    if not entity_name or not scope:
+        return False
+    norm = entity_reg.normalize_name(entity_name)
+    scope = scope.lower().strip()
+
+    # 1. Canonical entity registry lookup
+    if norm in entity_reg._name_to_id:
+        eid = entity_reg._name_to_id[norm]
+        etype = entity_reg._entities[eid].entity_type.lower()
+        if etype == scope:
+            return True
+
+    # 2. Standard geographic continents ontology
+    if scope == 'continent':
+        if norm in {'asia', 'africa', 'europe', 'north america', 'south america', 'australia', 'antarctica'}:
+            return True
+
+    # 3. Dynamic relational deduction from knowledge base facts
+    norm_ent = entity_name.strip().lower()
+    for f in kb_facts:
+        f_s = f.subject.strip().lower()
+        f_p = f.predicate.strip().lower()
+        f_o = f.object.strip().lower()
+
+        if scope == 'country':
+            # "X is a state/province in Y" -> Y is a Country
+            if f_p in ('is a state in', 'is a province in') and f_o == norm_ent:
+                return True
+            # "Y is a country in Z" -> Y is a Country
+            if f_p == 'is a country in' and f_s == norm_ent:
+                return True
+            if f_p == 'is a' and f_s == norm_ent and f_o == 'country':
+                return True
+
+        elif scope == 'continent':
+            # "Y is a country in Z" -> Z is a Continent
+            if f_p == 'is a country in' and f_o == norm_ent:
+                return True
+            # "Z is a continent in W" -> Z is a Continent
+            if f_p == 'is a continent in' and f_s == norm_ent:
+                return True
+            if f_p == 'is a' and f_s == norm_ent and f_o == 'continent':
+                return True
+
+        elif scope == 'state':
+            # "X is a city in Y" -> Y is a State
+            if f_p == 'is a city in' and f_o == norm_ent:
+                return True
+            # "Y is a state in Z" -> Y is a State
+            if f_p == 'is a state in' and f_s == norm_ent:
+                return True
+            if f_p == 'is a' and f_s == norm_ent and f_o == 'state':
+                return True
+
+        elif scope == 'city':
+            # "X is a city in Y" -> X is a City
+            if f_p == 'is a city in' and f_s == norm_ent:
+                return True
+            if f_p == 'is a' and f_s == norm_ent and f_o == 'city':
+                return True
+
+    return False
 
 
 class DocuMindService:
@@ -158,7 +230,7 @@ class DocuMindService:
             'failed_documents': failed_docs,
             'total_facts': total_facts,
             'total_queries': self.repo.count_queries(),
-            'active_rules_count': 4,
+            'active_rules_count': len(get_all_rules()),
             'recent_documents': recent_docs
         }
 
@@ -493,13 +565,40 @@ class DocuMindService:
             if speaker:
                 eff_subject = speaker
 
+        # Determine explicit geographical query scope (country / continent / state / city)
+        orig_q = (query.original_question or "").lower()
+        target_scope = None
+        if query.question_type in ('location', 'classification') or 'where' in orig_q or 'which' in orig_q:
+            if re.search(r'\bcountry\b', orig_q):
+                target_scope = 'country'
+            elif re.search(r'\bcontinent\b', orig_q):
+                target_scope = 'continent'
+            elif re.search(r'\bstate\b|\bprovince\b', orig_q):
+                target_scope = 'state'
+            elif re.search(r'\bcity\b', orig_q):
+                target_scope = 'city'
+
+        # If a specific geographical scope was explicitly requested, direct facts must satisfy it.
+        # Otherwise, direct facts are deferred in favor of hierarchical deduction.
+        if target_scope and direct_facts:
+            scoped_direct = [
+                f for f in direct_facts
+                if entity_matches_scope(f.object, target_scope, all_kb_facts, GLOBAL_ENTITY_REGISTRY)
+            ]
+            direct_facts = scoped_direct
+            retrieval = RetrievalResult(
+                query=query,
+                facts=direct_facts,
+                status='success' if direct_facts else 'empty'
+            )
+
         if query.expected_answer_field == 'boolean':
             # Boolean queries: verify if proposition holds directly or deduce via backward chaining
             if not direct_facts and eff_subject and query.predicate and query.object:
                 goal = (eff_subject, query.predicate, query.object)
                 wm = WorkingMemory()
                 wm.load_from_kb_facts(all_kb_facts)
-                proof = backward_chain(goal, wm, rules=get_all_rules())
+                proof = backward_chain(goal, wm, rules=get_all_rules(include_extended=True))
                 if proof.is_proven:
                     reasoning_result = proof
         elif len(direct_facts) == 0:
@@ -507,10 +606,10 @@ class DocuMindService:
             # on an isolated temporary working memory
             temp_wm = WorkingMemory()
             temp_wm.load_from_kb_facts(all_kb_facts)
-            fc_res = forward_chain(temp_wm, rules=get_all_rules())
+            fc_res = forward_chain(temp_wm, rules=get_all_rules(include_extended=True))
 
-            # Find an inferred fact matching the query constraints
-            goal: Optional[Tuple[str, str, str]] = None
+            # Find matching inferred facts matching the query constraints
+            matching_inferred = []
             for inf in fc_res.inferred_facts:
                 inf_s = inf.subject.strip().lower()
                 inf_p = inf.predicate.strip().lower()
@@ -522,19 +621,33 @@ class DocuMindService:
 
                 if eff_subject and query.predicate:
                     if subj_match and (inf_p == query.predicate.strip().lower() or inf_p == 'located in'):
-                        goal = (inf.subject, inf.predicate, inf.object)
-                        break
+                        matching_inferred.append(inf)
                 elif query.predicate and query.object:
                     if (inf_p == query.predicate.strip().lower() and
                         inf_o == query.object.strip().lower()):
-                        goal = (inf.subject, inf.predicate, inf.object)
-                        break
+                        matching_inferred.append(inf)
+
+            goal: Optional[Tuple[str, str, str]] = None
+            if matching_inferred:
+                selected_inf = None
+
+                # Check if question explicitly targets country or continent or state or city
+                if target_scope:
+                    for inf in matching_inferred:
+                        if entity_matches_scope(inf.object, target_scope, all_kb_facts, GLOBAL_ENTITY_REGISTRY):
+                            selected_inf = inf
+                            break
+
+                if not selected_inf:
+                    selected_inf = matching_inferred[0]
+
+                goal = (selected_inf.subject, selected_inf.predicate, selected_inf.object)
 
             # If an inferred fact was discovered, prove it formally via backward chaining
             if goal:
                 wm = WorkingMemory()
                 wm.load_from_kb_facts(all_kb_facts)
-                proof = backward_chain(goal, wm, rules=get_all_rules())
+                proof = backward_chain(goal, wm, rules=get_all_rules(include_extended=True))
                 if proof.is_proven:
                     reasoning_result = proof
 

@@ -130,6 +130,46 @@ def create_app(config_class=Config):
 
         return jsonify(result), status_code
 
+    @app.route('/api/load-sample', methods=['POST'])
+    def load_sample_document():
+        """
+        Load and ingest a pre-configured canonical academic knowledge document
+        for immediate testing and interactive demonstration.
+        """
+        sample_filename = 'DocuMind_AI_Academic_Sample.txt'
+        sample_path = os.path.join(app.config['UPLOAD_FOLDER'], sample_filename)
+        sample_content = (
+            "Tokyo is the capital of Japan.\n"
+            "Japan is located in Asia.\n"
+            "Bangalore is the capital of Karnataka.\n"
+            "Karnataka is a state in India.\n"
+            "India is located in Asia.\n"
+            "Paris is the capital of France.\n"
+            "France is located in Europe.\n"
+            "Canada borders United States.\n"
+            "United States borders Mexico.\n"
+            "Stanford University was established in 1891.\n"
+            "Harvard University was established in 1636.\n"
+            "Python was developed by Guido van Rossum.\n"
+            "C was developed by Dennis Ritchie.\n"
+            "Python is a high-level programming language.\n"
+        )
+        try:
+            with open(sample_path, 'w', encoding='utf-8') as f:
+                f.write(sample_content)
+
+            with open(sample_path, 'rb') as f:
+                from werkzeug.datastructures import FileStorage
+                file_storage = FileStorage(stream=f, filename=sample_filename, content_type='text/plain')
+                result = app.service.process_uploaded_file(file_storage, force=True)
+
+            return jsonify(result), 200
+        except Exception as e:
+            return jsonify({
+                'status': 'error',
+                'message': f'Failed to load sample document: {str(e)}'
+            }), 500
+
     @app.route('/ask', methods=['POST'])
     def ask_question():
         """

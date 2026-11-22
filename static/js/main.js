@@ -78,12 +78,14 @@ function setMascotState(state) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initNavigation();
     initMobileMenu();
     initFileUpload();
     initKnowledgeBaseSearch();
     initQuestionAnswering();
     initDropdownListeners();
+    initGraphVisualizer();
     refreshDashboardStats();
     loadQuestionHistory();
 });
@@ -369,6 +371,10 @@ function loadKnowledgeBaseFacts() {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'success') {
+                kbFactsCache = data.facts || [];
+                if (typeof updateKbGraphFromFacts === 'function') {
+                    updateKbGraphFromFacts(kbFactsCache);
+                }
                 if (badge) badge.textContent = `Total Facts: ${data.total_facts}`;
                 if (tbody) {
                     tbody.innerHTML = '';
@@ -460,6 +466,7 @@ function initQuestionAnswering() {
 }
 
 function renderAnswerResponse(data) {
+    lastAnswerData = data;
     const answerContainer = document.getElementById('answer-container');
     const badgesEl = document.getElementById('answer-status-badges');
     const latencyEl = document.getElementById('answer-latency');
@@ -1153,4 +1160,539 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+// =============================================================================
+// Theme Switching (Obsidian Dark / Botanical Parchment)
+// =============================================================================
+
+function initTheme() {
+    const saved = localStorage.getItem('documind_theme');
+    if (saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        applyTheme('dark');
+    } else {
+        applyTheme('light');
+    }
+}
+
+function toggleTheme() {
+    const isDark = document.body.classList.contains('dark-theme');
+    applyTheme(isDark ? 'light' : 'dark');
+}
+
+function applyTheme(theme) {
+    const lightIcon = document.querySelector('.theme-icon-light');
+    const darkIcon = document.querySelector('.theme-icon-dark');
+    const label = document.getElementById('theme-label-text');
+
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('documind_theme', 'dark');
+        if (lightIcon) lightIcon.style.display = 'none';
+        if (darkIcon) darkIcon.style.display = 'inline-block';
+        if (label) label.textContent = 'Botanical Light';
+    } else {
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('documind_theme', 'light');
+        if (lightIcon) lightIcon.style.display = 'inline-block';
+        if (darkIcon) darkIcon.style.display = 'none';
+        if (label) label.textContent = 'Obsidian Dark';
+    }
+    if (graphViewMode === 'graph' && typeof renderGraph === 'function') {
+        requestAnimationFrame(renderGraph);
+    }
+}
+
+// =============================================================================
+// Academic Sample Document Loader
+// =============================================================================
+
+function loadSampleDocument() {
+    const btn = document.getElementById('load-sample-btn');
+    const spinner = document.getElementById('sample-spinner');
+    if (btn) btn.disabled = true;
+    if (spinner) spinner.style.display = 'inline-block';
+    setMascotState('reading');
+
+    fetch('/api/load-sample', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+
+            if (data.status === 'success') {
+                showGlobalToast(`Ingested sample corpus: "${data.filename}" (${data.facts_extracted} SPO facts extracted)`, 'success');
+                setMascotState('answered');
+                refreshDashboardStats();
+                loadKnowledgeBaseFacts();
+                setTimeout(() => { switchTab('tab-kb'); }, 700);
+            } else {
+                showGlobalToast(data.message || 'Error loading sample document', 'error');
+                setMascotState('unsupported');
+            }
+        })
+        .catch(err => {
+            if (btn) btn.disabled = false;
+            if (spinner) spinner.style.display = 'none';
+            setMascotState('unsupported');
+            showGlobalToast(`Network error: ${err.message}`, 'error');
+        });
+}
+
+// =============================================================================
+// Answer & Proof Copy Actions
+// =============================================================================
+
+let lastAnswerData = null;
+
+function copyCurrentAnswer() {
+    if (!lastAnswerData || !lastAnswerData.answer_text) {
+        showGlobalToast('No answer to copy', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(lastAnswerData.answer_text).then(() => {
+        const label = document.getElementById('copy-answer-label');
+        if (label) {
+            const old = label.textContent;
+            label.textContent = 'Copied!';
+            setTimeout(() => { label.textContent = old; }, 1800);
+        }
+        showGlobalToast('Answer copied to clipboard!', 'success');
+    }).catch(err => {
+        showGlobalToast('Clipboard access denied', 'error');
+    });
+}
+
+function copyDeductiveProof() {
+    if (!lastAnswerData) {
+        showGlobalToast('No deductive proof to copy', 'warning');
+        return;
+    }
+    const text = (lastAnswerData.explanation && lastAnswerData.explanation.full_report) 
+        ? lastAnswerData.explanation.full_report 
+        : (lastAnswerData.answer_text || 'No proof available.');
+    navigator.clipboard.writeText(text).then(() => {
+        const label = document.getElementById('copy-proof-label');
+        if (label) {
+            const old = label.textContent;
+            label.textContent = 'Copied Proof!';
+            setTimeout(() => { label.textContent = old; }, 1800);
+        }
+        showGlobalToast('Deductive proof report copied to clipboard!', 'success');
+    }).catch(err => {
+        showGlobalToast('Clipboard access denied', 'error');
+    });
+}
+
+// =============================================================================
+// Interactive Knowledge Graph Canvas Visualizer
+// =============================================================================
+
+let kbGraphNodes = [];
+let kbGraphEdges = [];
+let kbFactsCache = [];
+let graphViewMode = 'table';
+let graphScale = 1.0;
+let graphPanX = 0;
+let graphPanY = 0;
+let isDraggingNode = null;
+let isPanningGraph = false;
+let panStartX = 0;
+let panStartY = 0;
+let hoveredNode = null;
+let canvasEl = null;
+let ctx = null;
+let simStep = 0;
+const MAX_SIM_STEPS = 200;
+
+function setKbViewMode(mode) {
+    graphViewMode = mode;
+    const btnTable = document.getElementById('btn-view-table');
+    const btnGraph = document.getElementById('btn-view-graph');
+    const tablePanel = document.getElementById('kb-table-panel');
+    const graphPanel = document.getElementById('kb-graph-panel');
+
+    if (mode === 'graph') {
+        if (btnTable) btnTable.classList.remove('active');
+        if (btnGraph) btnGraph.classList.add('active');
+        if (tablePanel) tablePanel.style.display = 'none';
+        if (graphPanel) graphPanel.style.display = 'flex';
+        initKbGraphCanvas();
+        if (kbFactsCache.length > 0) {
+            updateKbGraphFromFacts(kbFactsCache);
+        } else {
+            loadKnowledgeBaseFacts();
+        }
+    } else {
+        if (btnTable) btnTable.classList.add('active');
+        if (btnGraph) btnGraph.classList.remove('active');
+        if (tablePanel) tablePanel.style.display = 'block';
+        if (graphPanel) graphPanel.style.display = 'none';
+    }
+}
+
+function initGraphVisualizer() {
+    canvasEl = document.getElementById('kb-graph-canvas');
+    if (!canvasEl) return;
+    ctx = canvasEl.getContext('2d');
+
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+
+    function resizeCanvas() {
+        const rect = viewport.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvasEl.width = rect.width * dpr;
+        canvasEl.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        canvasEl.style.width = rect.width + 'px';
+        canvasEl.style.height = rect.height + 'px';
+        renderGraph();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Mouse Interactions
+    viewport.addEventListener('mousedown', e => {
+        const mousePos = getCanvasMousePos(e);
+        const node = findNodeAt(mousePos.x, mousePos.y);
+        if (node) {
+            isDraggingNode = node;
+            isDraggingNode.isFixed = true;
+        } else {
+            isPanningGraph = true;
+            panStartX = e.clientX - graphPanX;
+            panStartY = e.clientY - graphPanY;
+        }
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!canvasEl) return;
+        const mousePos = getCanvasMousePos(e);
+        if (isDraggingNode) {
+            isDraggingNode.x = (mousePos.x - graphPanX) / graphScale;
+            isDraggingNode.y = (mousePos.y - graphPanY) / graphScale;
+            renderGraph();
+        } else if (isPanningGraph) {
+            graphPanX = e.clientX - panStartX;
+            graphPanY = e.clientY - panStartY;
+            renderGraph();
+        } else {
+            const prev = hoveredNode;
+            hoveredNode = findNodeAt(mousePos.x, mousePos.y);
+            if (prev !== hoveredNode) {
+                viewport.style.cursor = hoveredNode ? 'pointer' : 'grab';
+                renderGraph();
+            }
+        }
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDraggingNode) {
+            isDraggingNode.isFixed = false;
+            isDraggingNode = null;
+        }
+        isPanningGraph = false;
+    });
+
+    viewport.addEventListener('wheel', e => {
+        e.preventDefault();
+        const zoomFactor = e.deltaY < 0 ? 1.12 : 0.88;
+        zoomKbGraph(zoomFactor, e.clientX, e.clientY);
+    }, { passive: false });
+
+    viewport.addEventListener('click', e => {
+        const mousePos = getCanvasMousePos(e);
+        const node = findNodeAt(mousePos.x, mousePos.y);
+        if (node) {
+            openNodeInspector(node);
+        }
+    });
+}
+
+function initKbGraphCanvas() {
+    if (!canvasEl) {
+        initGraphVisualizer();
+    }
+}
+
+function getCanvasMousePos(e) {
+    const viewport = document.getElementById('canvas-viewport');
+    const rect = viewport.getBoundingClientRect();
+    return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+}
+
+function findNodeAt(x, y) {
+    const worldX = (x - graphPanX) / graphScale;
+    const worldY = (y - graphPanY) / graphScale;
+    for (let i = kbGraphNodes.length - 1; i >= 0; i--) {
+        const n = kbGraphNodes[i];
+        const dx = worldX - n.x;
+        const dy = worldY - n.y;
+        if (dx * dx + dy * dy <= (n.radius + 4) * (n.radius + 4)) {
+            return n;
+        }
+    }
+    return null;
+}
+
+function updateKbGraphFromFacts(facts) {
+    if (!facts || facts.length === 0) {
+        kbGraphNodes = [];
+        kbGraphEdges = [];
+        renderGraph();
+        return;
+    }
+
+    const nodeMap = new Map();
+    kbGraphEdges = [];
+
+    facts.forEach(f => {
+        const subName = (f.subject || '').trim();
+        const objName = (f.object || '').trim();
+        const pred = (f.predicate || '').trim();
+        if (!subName || !objName) return;
+
+        if (!nodeMap.has(subName)) {
+            nodeMap.set(subName, {
+                id: subName,
+                name: subName,
+                x: (Math.random() - 0.5) * 500,
+                y: (Math.random() - 0.5) * 400,
+                vx: 0,
+                vy: 0,
+                degree: 0,
+                radius: 18,
+                facts: []
+            });
+        }
+        if (!nodeMap.has(objName)) {
+            nodeMap.set(objName, {
+                id: objName,
+                name: objName,
+                x: (Math.random() - 0.5) * 500,
+                y: (Math.random() - 0.5) * 400,
+                vx: 0,
+                vy: 0,
+                degree: 0,
+                radius: 18,
+                facts: []
+            });
+        }
+
+        const subNode = nodeMap.get(subName);
+        const objNode = nodeMap.get(objName);
+        subNode.degree++;
+        objNode.degree++;
+        subNode.facts.push(f);
+        objNode.facts.push(f);
+
+        kbGraphEdges.push({
+            source: subNode,
+            target: objNode,
+            predicate: pred,
+            fact: f
+        });
+    });
+
+    kbGraphNodes = Array.from(nodeMap.values());
+    kbGraphNodes.forEach(n => {
+        n.radius = Math.min(32, Math.max(16, 14 + n.degree * 2.5));
+    });
+
+    const nodeBadge = document.getElementById('graph-node-count-badge');
+    const edgeBadge = document.getElementById('graph-edge-count-badge');
+    if (nodeBadge) nodeBadge.textContent = `${kbGraphNodes.length} Entities`;
+    if (edgeBadge) edgeBadge.textContent = `${kbGraphEdges.length} Predicates`;
+
+    resetKbGraphView();
+    simStep = 0;
+    runSimulationLoop();
+}
+
+function runSimulationLoop() {
+    if (simStep >= MAX_SIM_STEPS) {
+        renderGraph();
+        return;
+    }
+
+    simStep++;
+    const k = 140; // ideal spring distance
+
+    // 1. Repulsion between all nodes
+    for (let i = 0; i < kbGraphNodes.length; i++) {
+        for (let j = i + 1; j < kbGraphNodes.length; j++) {
+            const n1 = kbGraphNodes[i];
+            const n2 = kbGraphNodes[j];
+            const dx = n2.x - n1.x;
+            const dy = n2.y - n1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            if (dist < 380) {
+                const force = (k * k) / (dist * dist);
+                const fx = (dx / dist) * force;
+                const fy = (dy / dist) * force;
+                if (!n1.isFixed) { n1.vx -= fx; n1.vy -= fy; }
+                if (!n2.isFixed) { n2.vx += fx; n2.vy += fy; }
+            }
+        }
+    }
+
+    // 2. Attraction along edges
+    for (let i = 0; i < kbGraphEdges.length; i++) {
+        const e = kbGraphEdges[i];
+        const dx = e.target.x - e.source.x;
+        const dy = e.target.y - e.source.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const force = (dist * dist) / k;
+        const fx = (dx / dist) * force * 0.08;
+        const fy = (dy / dist) * force * 0.08;
+        if (!e.source.isFixed) { e.source.vx += fx; e.source.vy += fy; }
+        if (!e.target.isFixed) { e.target.vx -= fx; e.target.vy -= fy; }
+    }
+
+    // 3. Center gravity and apply damping
+    for (let i = 0; i < kbGraphNodes.length; i++) {
+        const n = kbGraphNodes[i];
+        if (!n.isFixed) {
+            n.vx -= n.x * 0.015;
+            n.vy -= n.y * 0.015;
+            n.x += n.vx * 0.15;
+            n.y += n.vy * 0.15;
+            n.vx *= 0.85;
+            n.vy *= 0.85;
+        }
+    }
+
+    renderGraph();
+    requestAnimationFrame(runSimulationLoop);
+}
+
+function renderGraph() {
+    if (!ctx || !canvasEl) return;
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+
+    const w = viewport.clientWidth;
+    const h = viewport.clientHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    const isDark = document.body.classList.contains('dark-theme');
+    const bgEdgeColor = isDark ? 'rgba(79, 115, 101, 0.45)' : 'rgba(185, 199, 187, 0.65)';
+    const textPredColor = isDark ? '#b5c7bd' : '#63736b';
+
+    ctx.save();
+    ctx.translate(graphPanX, graphPanY);
+    ctx.scale(graphScale, graphScale);
+
+    // 1. Draw Edges
+    for (let i = 0; i < kbGraphEdges.length; i++) {
+        const e = kbGraphEdges[i];
+        const isHovered = hoveredNode && (hoveredNode === e.source || hoveredNode === e.target);
+        
+        ctx.beginPath();
+        ctx.strokeStyle = isHovered ? (isDark ? '#e2b66f' : '#315c50') : bgEdgeColor;
+        ctx.lineWidth = isHovered ? 2.5 : 1.2;
+        ctx.moveTo(e.source.x, e.source.y);
+        ctx.lineTo(e.target.x, e.target.y);
+        ctx.stroke();
+
+        // Edge label (predicate)
+        const midX = (e.source.x + e.target.x) / 2;
+        const midY = (e.source.y + e.target.y) / 2;
+        ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isHovered ? (isDark ? '#f4e5c8' : '#172b2a') : textPredColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(e.predicate, midX, midY - 6);
+    }
+
+    // 2. Draw Nodes
+    for (let i = 0; i < kbGraphNodes.length; i++) {
+        const n = kbGraphNodes[i];
+        const isHovered = (n === hoveredNode);
+
+        // Node circle
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+        
+        if (isDark) {
+            ctx.fillStyle = isHovered ? '#416f60' : '#203b35';
+            ctx.strokeStyle = isHovered ? '#e2b66f' : '#4f7365';
+        } else {
+            ctx.fillStyle = isHovered ? '#8bae9b' : '#ffffff';
+            ctx.strokeStyle = isHovered ? '#315c50' : '#8bae9b';
+        }
+        ctx.lineWidth = isHovered ? 3 : 2;
+        ctx.fill();
+        ctx.stroke();
+
+        // Node label
+        ctx.font = `${Math.max(11, Math.min(13, n.radius - 2))}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+        ctx.fillStyle = isDark ? '#edf3ee' : '#20312d';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        const label = n.name.length > 15 ? n.name.slice(0, 13) + '…' : n.name;
+        ctx.fillText(label, n.x, n.y);
+    }
+
+    ctx.restore();
+}
+
+function zoomKbGraph(factor, clientX, clientY) {
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+    const rect = viewport.getBoundingClientRect();
+    const cx = clientX ? (clientX - rect.left) : (viewport.clientWidth / 2);
+    const cy = clientY ? (clientY - rect.top) : (viewport.clientHeight / 2);
+
+    const prevScale = graphScale;
+    graphScale = Math.min(2.8, Math.max(0.35, graphScale * factor));
+    graphPanX = cx - (cx - graphPanX) * (graphScale / prevScale);
+    graphPanY = cy - (cy - graphPanY) * (graphScale / prevScale);
+    renderGraph();
+}
+
+function resetKbGraphView() {
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+    graphScale = 1.0;
+    graphPanX = viewport.clientWidth / 2;
+    graphPanY = viewport.clientHeight / 2;
+    renderGraph();
+}
+
+function openNodeInspector(node) {
+    const modal = document.getElementById('graph-node-modal');
+    const titleEl = document.getElementById('inspector-entity-title');
+    const listEl = document.getElementById('inspector-facts-list');
+    if (!modal || !titleEl || !listEl) return;
+
+    titleEl.textContent = node.name;
+    listEl.innerHTML = '';
+
+    if (!node.facts || node.facts.length === 0) {
+        listEl.innerHTML = '<div style="color: var(--text-muted);">No facts associated with this entity.</div>';
+    } else {
+        node.facts.forEach(f => {
+            const item = document.createElement('div');
+            item.className = 'inspector-fact-item';
+            item.innerHTML = `
+                <div><strong>${escapeHtml(f.subject)}</strong> <span class="predicate-badge" style="font-size: 0.7rem;">${escapeHtml(f.predicate)}</span> <strong>${escapeHtml(f.object)}</strong></div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.2rem;">&ldquo;${escapeHtml(f.source_sentence)}&rdquo;</div>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+
+    modal.style.display = 'flex';
+}
+
+function closeNodeInspector() {
+    const modal = document.getElementById('graph-node-modal');
+    if (modal) modal.style.display = 'none';
 }

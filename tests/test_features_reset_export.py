@@ -150,7 +150,65 @@ class TestFeaturesResetAndExport(unittest.TestCase):
         self.assertIn("DOCUMIND AI", first_page_text)
         self.assertIn("WORKSPACE ANALYSIS REPORT", first_page_text)
         self.assertIn("AID201A", first_page_text)
+
+        # Verify no double percentage conversion (e.g. 10000.0%) anywhere across pages
+        full_text = "".join(page.get_text() for page in doc)
+        self.assertNotIn("10000.0%", full_text)
+        self.assertNotIn("10000%", full_text)
         doc.close()
+
+    def test_04b_pdf_evaluation_metric_percentage_formatting(self):
+        """Verify empirical evaluation benchmark metrics in PDF are formatted with single conversion."""
+        self._seed_sample_data()
+
+        res = self.client.get('/api/export/pdf')
+        self.assertEqual(res.status_code, 200)
+
+        doc = fitz.open(stream=res.data, filetype="pdf")
+        full_text = "".join(page.get_text() for page in doc)
+        doc.close()
+
+        # Check that 100.0% is rendered for 100% metrics and 10000.0% is not rendered
+        self.assertIn("100.0%", full_text)
+        self.assertNotIn("10000.0%", full_text)
+
+    def test_04c_pdf_formatting_proportions_and_na(self):
+        """Verify metric values 1.0 -> 100.0%, 0.938 -> 93.8%, 0.5 -> 50.0%, and N/A -> N/A."""
+        from modules.export_service import PDFReportBuilder
+
+        custom_data = {
+            'report_metadata': {'course': 'AID201A', 'institution': 'RUAS', 'generated_at': '2026-11-07'},
+            'documents': [],
+            'knowledge_base_facts': [],
+            'query_history': [],
+            'evaluation': {
+                'summary': {
+                    'total_cases': 10,
+                    'successful_cases': 10,
+                    'answer_accuracy': 1.0,         # 1.0 -> 100.0%
+                    'retrieval_precision': 0.938,   # 0.938 -> 93.8%
+                    'retrieval_recall': 0.5,        # 0.5 -> 50.0%
+                    'retrieval_f1': 'N/A',          # N/A -> N/A
+                    'reasoning_accuracy': 100.0,    # 100.0 -> 100.0%
+                    'rule_precision': 0.938,        # 0.938 -> 93.8%
+                    'supporting_fact_accuracy': 0.5,# 0.5 -> 50.0%
+                    'provenance_accuracy': None,    # None -> N/A
+                    'average_execution_time_ms': 5.25
+                }
+            }
+        }
+
+        builder = PDFReportBuilder(custom_data)
+        pdf_bytes = builder.build_pdf_bytes()
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        full_text = "".join(page.get_text() for page in doc)
+        doc.close()
+
+        self.assertIn("100.0%", full_text)
+        self.assertIn("93.8%", full_text)
+        self.assertIn("50.0%", full_text)
+        self.assertIn("N/A", full_text)
+        self.assertNotIn("10000.0%", full_text)
 
     # =========================================================================
     # 4. Nuke Data / Workspace Reset Safety & Mechanics

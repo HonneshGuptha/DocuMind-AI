@@ -12,6 +12,7 @@ explicitly flagged with status='unsupported'.
 
 import re
 from typing import Optional, Dict, Any, Tuple
+from modules.knowledge_base.relationship_registry import GLOBAL_RELATIONSHIP_REGISTRY
 from .query_models import StructuredQuery
 from .classifier import QuestionClassifier
 
@@ -107,7 +108,54 @@ class QuestionParser:
                 error_message=f"Parser for question type '{q_type}' is not implemented."
             )
 
-        return parse_method(normalized_q, original_q)
+        result = parse_method(normalized_q, original_q)
+        if result.parsing_status == 'unsupported':
+            # Check if generic reverse relationship provides a more specific query
+            rev = self._parse_reverse_relationship(normalized_q, original_q)
+            if rev:
+                return rev
+        return result
+
+    def _parse_reverse_relationship(self, q: str, orig_q: str) -> Optional[StructuredQuery]:
+        """
+        Generic reverse relationship parser driven by RelationshipRegistry.
+        Detects 'Who <verb_phrase> <entity>?' and extracts predicate & object.
+        """
+        m = re.match(r'^(?:who|which\s+(?:person|entity|individual))\s+(?:was\s+|is\s+)?(?P<remainder>.+?)\s*\?*$', q, re.IGNORECASE)
+        if not m:
+            return None
+
+        remainder = m.group('remainder')
+        match = GLOBAL_RELATIONSHIP_REGISTRY.match_reverse_phrase(remainder)
+        if not match:
+            return None
+
+        var, entity_part, defn = match
+        obj = clean_entity(entity_part)
+        if not obj:
+            return None
+
+        if not defn.supports_reverse:
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type=defn.question_type,
+                subject=None,
+                predicate=defn.canonical_predicate,
+                object=obj,
+                expected_answer_field='subject',
+                parsing_status='unsupported',
+                error_message=f"Reverse relationship query for '{defn.canonical_predicate}' is unsupported."
+            )
+
+        return StructuredQuery(
+            original_question=orig_q,
+            question_type=defn.question_type,
+            subject=None,
+            predicate=defn.canonical_predicate,
+            object=obj,
+            expected_answer_field='subject',
+            parsing_status='success'
+        )
 
     # --------------------------------------------------------------------------
     # Type-Specific Deterministic Parsing Methods
@@ -148,8 +196,10 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'capital')
 
     def _parse_name(self, q: str, orig_q: str) -> StructuredQuery:
-        # "Who am I?" -> subject: 'Speaker', predicate: 'has name', target: 'object'
-        if re.match(r'^who\s+am\s+i\s*\?*$', q, re.IGNORECASE) or re.match(r'^(?:what\s+is|what\'s)\s+my\s+name\s*\?*$', q, re.IGNORECASE):
+        # "Who am I?" / "What is my name?" / "What is my identity?" -> subject: 'Speaker', predicate: 'has name', target: 'object'
+        if re.match(r'^who\s+am\s+i\s*\?*$', q, re.IGNORECASE) or \
+           re.match(r'^(?:what\s+is|what\'s)\s+my\s+(?:name|identity)\s*\?*$', q, re.IGNORECASE) or \
+           re.match(r'^(?:what\s+is|what\'s)\s+the\s+identity\s+of\s+me\s*\?*$', q, re.IGNORECASE):
             return StructuredQuery(
                 original_question=orig_q,
                 question_type='name',
@@ -178,6 +228,11 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'name')
 
     def _parse_residence(self, q: str, orig_q: str) -> StructuredQuery:
+        # Check reverse query first (e.g. "Who lives in Bangalore?")
+        rev = self._parse_reverse_relationship(q, orig_q)
+        if rev and rev.question_type == 'residence':
+            return rev
+
         # "Where do I live?"
         if re.match(r'^(?:where|in\s+which\s+(?:city|place))\s+do\s+i\s+(?:live|reside|stay)\s*\?*$', q, re.IGNORECASE):
             return StructuredQuery(
@@ -207,6 +262,11 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'residence')
 
     def _parse_employment(self, q: str, orig_q: str) -> StructuredQuery:
+        # Check reverse query first (e.g. "Who works at KPMG?")
+        rev = self._parse_reverse_relationship(q, orig_q)
+        if rev and rev.question_type == 'employment':
+            return rev
+
         # "Where do I work?"
         if re.match(r'^(?:where|which\s+company)\s+do\s+i\s+work(?:\s+(?:at|for))?\s*\?*$', q, re.IGNORECASE):
             return StructuredQuery(
@@ -216,20 +276,6 @@ class QuestionParser:
                 predicate='works at',
                 object=None,
                 expected_answer_field='object',
-                parsing_status='success'
-            )
-
-        # "Who works at KPMG?" -> Reverse Lookup!
-        m_rev = re.match(r'^who\s+(?:works|is\s+employed)\s+(?:at|for|in)\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
-        if m_rev:
-            obj = clean_entity(m_rev.group('entity'))
-            return StructuredQuery(
-                original_question=orig_q,
-                question_type='employment',
-                subject=None,
-                predicate='works at',
-                object=obj,
-                expected_answer_field='subject',
                 parsing_status='success'
             )
 
@@ -250,6 +296,11 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'employment')
 
     def _parse_education(self, q: str, orig_q: str) -> StructuredQuery:
+        # Check reverse query first (e.g. "Who studies at RUAS?")
+        rev = self._parse_reverse_relationship(q, orig_q)
+        if rev and rev.question_type == 'education':
+            return rev
+
         # "Where do I study?" / "What is my college?"
         if re.match(r'^(?:where|which\s+college|which\s+university)\s+do\s+i\s+(?:study|attend|go\s+to)(?:\s+at)?\s*\?*$', q, re.IGNORECASE) or \
            re.match(r'^(?:what|which)\s+is\s+my\s+(?:college|university|school|institution)\s*\?*$', q, re.IGNORECASE):
@@ -508,6 +559,19 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'identity')
 
     def _parse_classification(self, q: str, orig_q: str) -> StructuredQuery:
+        # Pattern A0: First-person role queries: "What am I?" / "What student am I?" / "Which student am I?"
+        if re.match(r'^what\s+am\s+i\s*\?*$', q, re.IGNORECASE) or \
+           re.match(r'^(?:what|which)\s+(?:student|kind\s+of\s+student|type\s+of\s+student)\s+am\s+i\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='classification',
+                subject='Speaker',
+                predicate='is a',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
         # Pattern A: "Am I a student?" / "Am I an AI student?"
         m_ami = re.match(r'^am\s+i\s+(?:a|an)\s+(?P<role>.+?)\s*\?*$', q, re.IGNORECASE)
         if m_ami:

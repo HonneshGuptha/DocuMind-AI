@@ -16,6 +16,7 @@ from modules.knowledge_base import (
     FactPattern,
     FACTUAL_PATTERNS,
     split_sentences,
+    normalize_document_linebreaks,
     KnowledgeBaseRepository,
     init_db
 )
@@ -160,6 +161,34 @@ class TestKnowledgeBase(unittest.TestCase):
         self.assertEqual(len(sentences), 2)
         self.assertIn("Dr. Smith visited the U.S. in 2020.", sentences[0][1])
         self.assertIn("Python is a programming language.", sentences[1][1])
+
+    def test_intra_sentence_linebreak_normalization(self):
+        """Test that single linebreaks within sentences are unified deterministically."""
+        text = "Ravi\nworks at Research Labs.\n\nMeera works at\nTech Solutions."
+        sentences = split_sentences(text)
+
+        self.assertEqual(len(sentences), 2)
+        self.assertEqual(sentences[0][1], "Ravi works at Research Labs.")
+        self.assertEqual(sentences[1][1], "Meera works at Tech Solutions.")
+
+    def test_multiword_entity_linebreak_normalization(self):
+        """Test that split multiword entity names are rejoined across lines."""
+        text = "Tamil\nNadu is located\nin India.\nChennai is located in Tamil\nNadu."
+        sentences = split_sentences(text)
+
+        self.assertEqual(len(sentences), 2)
+        self.assertEqual(sentences[0][1], "Tamil Nadu is located in India.")
+        self.assertEqual(sentences[1][1], "Chennai is located in Tamil Nadu.")
+
+    def test_guard_against_dangling_preposition(self):
+        """Test that fragments ending in prepositions do not form incomplete facts."""
+        pattern = FactPattern(
+            name="TEST_IS_A",
+            regex=r'^(?P<subject>[A-Za-z]+)\s+is\s+a\s+(?P<object>[A-Za-z\s]+)$',
+            default_predicate="is a"
+        )
+        self.assertIsNone(pattern.match("Karnataka is a state in"))
+        self.assertIsNotNone(pattern.match("Karnataka is a state"))
 
     # --------------------------------------------------------------------------
     # 3. SQLite Repository & Persistence Operations

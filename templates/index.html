@@ -184,6 +184,11 @@
                             </a>
                         </div>
                     </div>
+                    <button class="theme-toggle-btn" id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle Obsidian Dark / Botanical Parchment Theme" title="Toggle Theme (Obsidian Dark / Botanical Parchment)">
+                        <svg class="theme-icon-light icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="theme-icon-dark icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 15px; height: 15px; display: none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <span id="theme-label-text">Obsidian Dark</span>
+                    </button>
                     <span class="badge badge-success">&#10003; Classical AI</span>
                     <span class="badge badge-indigo">4 Rules Active</span>
                     <span class="badge badge-neutral">16 MB Limit</span>
@@ -446,6 +451,11 @@
                                     <span class="spinner" id="upload-spinner" style="display: none;"></span>
                                     <span>Upload & Ingest Document</span>
                                 </button>
+                                <button type="button" class="btn btn-secondary" id="load-sample-btn" onclick="loadSampleDocument()">
+                                    <span class="spinner" id="sample-spinner" style="display: none;"></span>
+                                    <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                                    <span>Load Academic Sample Dataset</span>
+                                </button>
                             </div>
                         </form>
 
@@ -488,6 +498,16 @@
                                 <p class="card-subtitle">Relational Subject-Predicate-Object (SPO) triples stored in SQLite with full sentence provenance.</p>
                             </div>
                             <div class="kb-controls">
+                                <div class="view-switch-tabs">
+                                    <button type="button" class="view-tab-btn active" id="btn-view-table" onclick="setKbViewMode('table')">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                        <span>Table</span>
+                                    </button>
+                                    <button type="button" class="view-tab-btn" id="btn-view-graph" onclick="setKbViewMode('graph')">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;"><circle cx="6" cy="6" r="3"></circle><circle cx="18" cy="6" r="3"></circle><circle cx="12" cy="18" r="3"></circle><line x1="8.5" y1="7.5" x2="15.5" y2="7.5"></line><line x1="7.5" y1="8.5" x2="10.5" y2="15.5"></line><line x1="16.5" y1="8.5" x2="13.5" y2="15.5"></line></svg>
+                                        <span>Knowledge Graph</span>
+                                    </button>
+                                </div>
                                 <div class="search-input-wrap">
                                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     <input type="text" id="kb-filter-input" class="search-input-field" placeholder="Filter facts by subject, predicate, object, or document…">
@@ -499,6 +519,34 @@
                             </div>
                         </div>
 
+                        <!-- Knowledge Graph Visualization Canvas Panel -->
+                        <div id="kb-graph-panel" class="kb-graph-panel" style="display: none;">
+                            <div class="graph-toolbar-row">
+                                <div class="graph-badges-group">
+                                    <span class="badge badge-indigo" id="graph-node-count-badge">0 Entities</span>
+                                    <span class="badge badge-cyan" id="graph-edge-count-badge">0 Predicates</span>
+                                    <span class="graph-instruction-text">Drag nodes to position • Mouse wheel to zoom • Click node for fact inspection</span>
+                                </div>
+                                <div class="graph-controls-group">
+                                    <button type="button" class="btn btn-xs btn-outline" onclick="zoomKbGraph(1.2)" title="Zoom In">+</button>
+                                    <button type="button" class="btn btn-xs btn-outline" onclick="zoomKbGraph(0.8)" title="Zoom Out">-</button>
+                                    <button type="button" class="btn btn-xs btn-outline" onclick="resetKbGraphView()" title="Fit Graph">Fit View</button>
+                                </div>
+                            </div>
+                            <div class="canvas-viewport" id="canvas-viewport">
+                                <canvas id="kb-graph-canvas" width="960" height="500"></canvas>
+                                <!-- Interactive Node Detail Floating Card -->
+                                <div id="graph-node-modal" class="graph-node-inspector" style="display: none;">
+                                    <div class="inspector-header">
+                                        <strong id="inspector-entity-title">Entity Details</strong>
+                                        <button type="button" class="inspector-close" onclick="closeNodeInspector()">&times;</button>
+                                    </div>
+                                    <div class="inspector-body" id="inspector-facts-list"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="kb-table-panel">
                         <div class="table-meta-bar">
                             <span id="kb-count-badge" class="badge badge-indigo">Loading facts…</span>
                             <span class="table-hint">Relational SPO triples with immutable provenance records.</span>
@@ -542,6 +590,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        </div> <!-- end kb-table-panel -->
                     </div>
                 </section>
 
@@ -629,6 +678,16 @@
                                     <div class="answer-highlight-text" id="answer-text"></div>
                                 </div>
                                 <div class="query-audit-strip" id="parsed-query-bar"></div>
+                                <div class="answer-actions-bar">
+                                    <button type="button" class="btn btn-xs btn-outline-primary" id="copy-answer-btn" onclick="copyCurrentAnswer()">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                        <span id="copy-answer-label">Copy Answer</span>
+                                    </button>
+                                    <button type="button" class="btn btn-xs btn-outline" id="copy-proof-btn" onclick="copyDeductiveProof()">
+                                        <svg class="icon-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 13px; height: 13px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                                        <span id="copy-proof-label">Copy Deductive Proof</span>
+                                    </button>
+                                </div>
                             </div>
 
                             <!-- Structured Reasoning & Provenance (Vertical Animated Timeline) -->

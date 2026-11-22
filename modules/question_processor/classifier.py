@@ -11,6 +11,7 @@ no pretrained language models, and no semantic embedding classification.
 
 import re
 from typing import Optional, List, Tuple
+from modules.knowledge_base.relationship_registry import GLOBAL_RELATIONSHIP_REGISTRY
 
 
 class QuestionClassifier:
@@ -39,6 +40,8 @@ class QuestionClassifier:
             [
                 re.compile(r'^who\s+am\s+i\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what\s+is|what\'s)\s+my\s+name\s*\?*$', re.IGNORECASE),
+                re.compile(r'^(?:what\s+is|what\'s)\s+my\s+identity\s*\?*$', re.IGNORECASE),
+                re.compile(r'^(?:what\s+is|what\'s)\s+the\s+identity\s+of\s+me\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what\s+is|what\'s)\s+(?P<entity>[^?]+?)(?:\'s|s\')\s+name\s*\?*$', re.IGNORECASE),
                 re.compile(r'^name\s+of\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
             ]
@@ -51,6 +54,7 @@ class QuestionClassifier:
                 re.compile(r'^where\s+do\s+i\s+(?:live|reside|stay)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^where\s+(?:does|is)\s+(?P<entity>.+?)\s+(?:live|reside|residing|stay|staying)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^in\s+which\s+(?:city|place)\s+(?:do\s+i|does\s+(?P<entity>.+?))\s+(?:live|reside)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^who\s+(?:lives|resides|stays)\s+in\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
             ]
         ),
 
@@ -75,6 +79,8 @@ class QuestionClassifier:
                 re.compile(r'^what\s+is\s+(?P<entity>.+?)\s+studying\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what|which)\s+is\s+my\s+(?:college|university|school|institution)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what|which)\s+is\s+(?P<entity>[^?]+?)(?:\'s|s\')\s+(?:college|university|school)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^who\s+(?:studies|is\s+enrolled)\s+(?:at|in)\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^who\s+attends\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
             ]
         ),
 
@@ -153,6 +159,8 @@ class QuestionClassifier:
         (
             'classification',
             [
+                re.compile(r'^what\s+am\s+i\s*\?*$', re.IGNORECASE),
+                re.compile(r'^(?:what|which)\s+(?:student|kind\s+of\s+student|type\s+of\s+student)\s+am\s+i\s*\?*$', re.IGNORECASE),
                 re.compile(r'^what\s+(?:kind|type|sort)\s+of\s+(?:entity|thing|language|system)\s+is\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^what\s+is\s+(?:a|an)\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^what\s+is\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
@@ -178,6 +186,15 @@ class QuestionClassifier:
         # Normalize leading/trailing whitespace, collapse internal spaces, and handle trailing punctuation
         clean_question = re.sub(r'[ \t]+', ' ', question.strip())
         clean_question = re.sub(r'\s+(\?+)$', r'\1', clean_question)
+
+        # Generic reverse relationship resolution driven by RelationshipRegistry
+        m_rev = re.match(r'^(?:who|which\s+(?:person|entity|individual))\s+(?:was\s+|is\s+)?(?P<remainder>.+?)\s*\?*$', clean_question, re.IGNORECASE)
+        if m_rev:
+            match = GLOBAL_RELATIONSHIP_REGISTRY.match_reverse_phrase(m_rev.group('remainder'))
+            if match:
+                var, entity_part, defn = match
+                if entity_part:
+                    return defn.question_type
 
         for q_type, patterns in self.CLASSIFICATION_RULES:
             for pattern in patterns:

@@ -15,12 +15,16 @@ dist/
 *.egg-info/
 
 # SQLite Database files (keep schema, ignore local runtime databases)
+*.db
 database/*.db
 database/*.sqlite3
 database/*.db-journal
 database/*.db-wal
 database/*.db-shm
 !database/.gitkeep
+
+# Local extraction scratch
+assignment_spec.txt
 
 # Uploaded documents (runtime directory)
 uploads/*

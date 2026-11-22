@@ -2407,3 +2407,261 @@ body.app-body {
         animation: none !important;
     }
 }
+
+/* ==========================================================================
+   Visual Enhancements: Obsidian Dark Theme, Knowledge Graph & Action Buttons
+   ========================================================================== */
+
+/* Theme Toggle Button in Header */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.8rem;
+    background: var(--surface-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.theme-toggle-btn:hover {
+    background: var(--surface-muted);
+    border-color: var(--brand-700);
+}
+
+/* Dark Theme Surface Variable Mappings */
+body.app-body.dark-theme {
+    --surface-page: #13221f;
+    --surface-card: #1b322c;
+    --surface-muted: #244139;
+    --surface-raised: #1f3b33;
+    --border-default: #2d4f44;
+    --border-strong: #436d5e;
+    --text-primary: #edf3ee;
+    --text-secondary: #b5c7bd;
+    --text-muted: #829b8f;
+    background-color: var(--surface-page);
+    color: var(--text-primary);
+}
+
+body.app-body.dark-theme .glass-header {
+    background: rgba(19, 34, 31, 0.92);
+    border-bottom: 1px solid var(--border-default);
+}
+
+body.app-body.dark-theme .card,
+body.app-body.dark-theme .kpi-card,
+body.app-body.dark-theme .modern-drop-zone,
+body.app-body.dark-theme .hero-answer-panel,
+body.app-body.dark-theme .reasoning-timeline-panel,
+body.app-body.dark-theme .qa-hero-card,
+body.app-body.dark-theme .eval-hero-banner,
+body.app-body.dark-theme .kb-graph-panel {
+    background: var(--surface-card);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+body.app-body.dark-theme .modern-table thead th {
+    background: var(--surface-muted);
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-default);
+}
+
+body.app-body.dark-theme .modern-table tbody tr:hover td {
+    background: var(--surface-muted);
+}
+
+body.app-body.dark-theme .modern-table td {
+    border-bottom-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+body.app-body.dark-theme .search-input-field,
+body.app-body.dark-theme .qa-input-field {
+    background: var(--surface-muted);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+body.app-body.dark-theme .search-input-field:focus,
+body.app-body.dark-theme .qa-input-field:focus {
+    background: var(--surface-card);
+    border-color: var(--brand-500);
+}
+
+body.app-body.dark-theme .chip-item {
+    background: var(--surface-muted);
+    border-color: var(--border-default);
+    color: var(--text-secondary);
+}
+
+body.app-body.dark-theme .chip-item:hover {
+    background: var(--brand-800);
+    color: var(--text-primary);
+    border-color: var(--brand-500);
+}
+
+body.app-body.dark-theme .theme-toggle-btn {
+    background: var(--surface-card);
+    border-color: var(--border-default);
+    color: var(--text-primary);
+}
+
+/* KB View Mode Switcher */
+.view-switch-tabs {
+    display: inline-flex;
+    background: var(--surface-muted);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+    gap: 3px;
+    border: 1px solid var(--border-default);
+}
+
+.view-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-xs);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.view-tab-btn.active {
+    background: var(--surface-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Knowledge Graph Visualization Panel */
+.kb-graph-panel {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    overflow: hidden;
+}
+
+.graph-toolbar-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border-default);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.graph-badges-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.graph-instruction-text {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.graph-controls-group {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.canvas-viewport {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: var(--surface-page);
+    overflow: hidden;
+    cursor: grab;
+}
+
+.canvas-viewport:active {
+    cursor: grabbing;
+}
+
+#kb-graph-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Floating Node Inspector */
+.graph-node-inspector {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 320px;
+    max-height: 380px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-elevated);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInModal 0.2s ease-out;
+}
+
+.inspector-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.85rem;
+    background: var(--surface-muted);
+    border-bottom: 1px solid var(--border-default);
+    font-size: 0.85rem;
+}
+
+.inspector-close {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+}
+
+.inspector-body {
+    padding: 0.75rem;
+    overflow-y: auto;
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.inspector-fact-item {
+    background: var(--surface-muted);
+    padding: 0.5rem 0.65rem;
+    border-radius: var(--radius-xs);
+    border-left: 3px solid var(--brand-700);
+}
+
+/* Answer Quick Action Bar */
+.answer-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border-default);
+}
+
