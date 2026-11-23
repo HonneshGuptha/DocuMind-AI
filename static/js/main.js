@@ -272,6 +272,7 @@ function initFileUpload() {
             if (status === 200 && body.status === 'success') {
                 renderUploadSuccess(body);
                 refreshDashboardStats();
+                loadKnowledgeBaseFacts();
                 setMascotState('answered');
             } else {
                 renderUploadError(body.message || 'Failed to process document.');
@@ -1304,6 +1305,8 @@ let canvasEl = null;
 let ctx = null;
 let simStep = 0;
 const MAX_SIM_STEPS = 200;
+let isGraphVisualizerInitialized = false;
+let simAnimFrameId = null;
 
 function setKbViewMode(mode) {
     graphViewMode = mode;
@@ -1317,12 +1320,25 @@ function setKbViewMode(mode) {
         if (btnGraph) btnGraph.classList.add('active');
         if (tablePanel) tablePanel.style.display = 'none';
         if (graphPanel) graphPanel.style.display = 'flex';
-        initKbGraphCanvas();
-        if (kbFactsCache.length > 0) {
+
+        initGraphVisualizer();
+        resizeKbGraphCanvas();
+
+        if (kbFactsCache && kbFactsCache.length > 0) {
             updateKbGraphFromFacts(kbFactsCache);
         } else {
             loadKnowledgeBaseFacts();
         }
+
+        // Layout pass ensures non-zero clientWidth/clientHeight
+        requestAnimationFrame(() => {
+            resizeKbGraphCanvas();
+            if (graphPanX === 0 && graphPanY === 0) {
+                resetKbGraphView();
+            } else {
+                renderGraph();
+            }
+        });
     } else {
         if (btnTable) btnTable.classList.add('active');
         if (btnGraph) btnGraph.classList.remove('active');
@@ -1331,7 +1347,37 @@ function setKbViewMode(mode) {
     }
 }
 
+function resizeKbGraphCanvas() {
+    if (!canvasEl) {
+        canvasEl = document.getElementById('kb-graph-canvas');
+        if (!canvasEl) return;
+        ctx = canvasEl.getContext('2d');
+    }
+    const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return;
+
+    const rect = viewport.getBoundingClientRect();
+    const w = rect.width || viewport.clientWidth;
+    const h = rect.height || viewport.clientHeight;
+
+    // Do not resize to 0 if viewport is hidden
+    if (!w || !h || w <= 0 || h <= 0) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvasEl.width = Math.round(w * dpr);
+    canvasEl.height = Math.round(h * dpr);
+    canvasEl.style.width = w + 'px';
+    canvasEl.style.height = h + 'px';
+
+    if (graphPanX === 0 && graphPanY === 0) {
+        graphPanX = w / 2;
+        graphPanY = h / 2;
+    }
+    renderGraph();
+}
+
 function initGraphVisualizer() {
+    if (isGraphVisualizerInitialized) return;
     canvasEl = document.getElementById('kb-graph-canvas');
     if (!canvasEl) return;
     ctx = canvasEl.getContext('2d');
@@ -1339,19 +1385,11 @@ function initGraphVisualizer() {
     const viewport = document.getElementById('canvas-viewport');
     if (!viewport) return;
 
-    function resizeCanvas() {
-        const rect = viewport.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        canvasEl.width = rect.width * dpr;
-        canvasEl.height = rect.height * dpr;
-        ctx.scale(dpr, dpr);
-        canvasEl.style.width = rect.width + 'px';
-        canvasEl.style.height = rect.height + 'px';
-        renderGraph();
-    }
+    isGraphVisualizerInitialized = true;
+    window.addEventListener('resize', resizeKbGraphCanvas);
 
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    // Initial resize if viewport is visible
+    resizeKbGraphCanvas();
 
     // Mouse Interactions
     viewport.addEventListener('mousedown', e => {
@@ -1412,13 +1450,13 @@ function initGraphVisualizer() {
 }
 
 function initKbGraphCanvas() {
-    if (!canvasEl) {
-        initGraphVisualizer();
-    }
+    initGraphVisualizer();
+    resizeKbGraphCanvas();
 }
 
 function getCanvasMousePos(e) {
     const viewport = document.getElementById('canvas-viewport');
+    if (!viewport) return { x: 0, y: 0 };
     const rect = viewport.getBoundingClientRect();
     return {
         x: e.clientX - rect.left,
@@ -1441,9 +1479,18 @@ function findNodeAt(x, y) {
 }
 
 function updateKbGraphFromFacts(facts) {
+    const nodeBadge = document.getElementById('graph-node-count-badge');
+    const edgeBadge = document.getElementById('graph-edge-count-badge');
+
     if (!facts || facts.length === 0) {
         kbGraphNodes = [];
         kbGraphEdges = [];
+        if (nodeBadge) nodeBadge.textContent = '0 Entities';
+        if (edgeBadge) edgeBadge.textContent = '0 Predicates';
+        if (simAnimFrameId) {
+            cancelAnimationFrame(simAnimFrameId);
+            simAnimFrameId = null;
+        }
         renderGraph();
         return;
     }
@@ -1504,18 +1551,21 @@ function updateKbGraphFromFacts(facts) {
         n.radius = Math.min(32, Math.max(16, 14 + n.degree * 2.5));
     });
 
-    const nodeBadge = document.getElementById('graph-node-count-badge');
-    const edgeBadge = document.getElementById('graph-edge-count-badge');
     if (nodeBadge) nodeBadge.textContent = `${kbGraphNodes.length} Entities`;
     if (edgeBadge) edgeBadge.textContent = `${kbGraphEdges.length} Predicates`;
 
     resetKbGraphView();
+    if (simAnimFrameId) {
+        cancelAnimationFrame(simAnimFrameId);
+        simAnimFrameId = null;
+    }
     simStep = 0;
     runSimulationLoop();
 }
 
 function runSimulationLoop() {
     if (simStep >= MAX_SIM_STEPS) {
+        simAnimFrameId = null;
         renderGraph();
         return;
     }
@@ -1568,7 +1618,7 @@ function runSimulationLoop() {
     }
 
     renderGraph();
-    requestAnimationFrame(runSimulationLoop);
+    simAnimFrameId = requestAnimationFrame(runSimulationLoop);
 }
 
 function renderGraph() {
@@ -1576,17 +1626,45 @@ function renderGraph() {
     const viewport = document.getElementById('canvas-viewport');
     if (!viewport) return;
 
-    const w = viewport.clientWidth;
-    const h = viewport.clientHeight;
-    ctx.clearRect(0, 0, w, h);
+    const dpr = window.devicePixelRatio || 1;
+    const w = (viewport.clientWidth > 0) ? viewport.clientWidth : (canvasEl.width > 0 ? (canvasEl.width / dpr) : 960);
+    const h = (viewport.clientHeight > 0) ? viewport.clientHeight : (canvasEl.height > 0 ? (canvasEl.height / dpr) : 520);
+
+    // If canvas buffer is 0x0, initialize backing dimensions
+    if (canvasEl.width <= 0 || canvasEl.height <= 0) {
+        canvasEl.width = Math.round(w * dpr);
+        canvasEl.height = Math.round(h * dpr);
+    }
+
+    // Clear entire backing buffer using identity transform
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
 
     const isDark = document.body.classList.contains('dark-theme');
-    const bgEdgeColor = isDark ? 'rgba(79, 115, 101, 0.45)' : 'rgba(185, 199, 187, 0.65)';
-    const textPredColor = isDark ? '#b5c7bd' : '#63736b';
 
+    // Empty state when there are no nodes in the knowledge graph
+    if (!kbGraphNodes || kbGraphNodes.length === 0) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.font = '600 16px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isDark ? '#d1ded6' : '#2b443c';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Knowledge Base is empty — no entities to display.', w / 2, h / 2 - 14);
+
+        ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.fillStyle = isDark ? '#8da597' : '#65776f';
+        ctx.fillText('Upload documents or load sample dataset to build the Knowledge Graph.', w / 2, h / 2 + 16);
+        return;
+    }
+
+    // Scale by DPR, then translate & zoom
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.save();
     ctx.translate(graphPanX, graphPanY);
     ctx.scale(graphScale, graphScale);
+
+    const bgEdgeColor = isDark ? 'rgba(79, 115, 101, 0.45)' : 'rgba(185, 199, 187, 0.65)';
+    const textPredColor = isDark ? '#b5c7bd' : '#63736b';
 
     // 1. Draw Edges
     for (let i = 0; i < kbGraphEdges.length; i++) {
@@ -1659,10 +1737,11 @@ function zoomKbGraph(factor, clientX, clientY) {
 
 function resetKbGraphView() {
     const viewport = document.getElementById('canvas-viewport');
-    if (!viewport) return;
+    const w = (viewport && viewport.clientWidth > 0) ? viewport.clientWidth : 960;
+    const h = (viewport && viewport.clientHeight > 0) ? viewport.clientHeight : 520;
     graphScale = 1.0;
-    graphPanX = viewport.clientWidth / 2;
-    graphPanY = viewport.clientHeight / 2;
+    graphPanX = w / 2;
+    graphPanY = h / 2;
     renderGraph();
 }
 
