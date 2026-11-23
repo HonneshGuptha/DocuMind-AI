@@ -1,8 +1,9 @@
 # DocuMind-AI: Knowledge-Based Document Question Answering System
 # Mandatory Academic Restrictions: Strictly NO NLP, NO LLMs, NO vector DBs, NO embeddings
 
-# Web Framework
+# Web Framework & Production WSGI
 Flask>=2.2.0,<3.1.0
+gunicorn>=21.2.0
 
 # Document Raw Text Extraction
 PyMuPDF>=1.21.0
