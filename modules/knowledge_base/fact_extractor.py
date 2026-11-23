@@ -141,8 +141,8 @@ def split_sentences(text: str) -> List[Tuple[int, str]]:
     # 3. Protect numbered headers at start of lines e.g. "1. Personal and Academic Profile"
     processed = re.sub(r'(?m)^(\d+)\.\s+', r'\1___DOT_NUM___ ', processed)
 
-    # 4. Split on sentence terminal punctuation (. ? !) followed by whitespace or linebreaks
-    raw_sentences = re.split(r'(?<=[.!?])(?:\s+|\n+)|(?:\r?\n)+', processed)
+    # 4. Split on sentence terminal punctuation (. ? !) optionally followed by quotation marks, then whitespace or linebreaks
+    raw_sentences = re.split(r'(?:(?<=[.!?])|(?<=[.!?]["\'”’]))(?:\s+|\n+)|(?:\r?\n)+', processed)
 
     sentences = []
     sentence_idx = 0
@@ -200,6 +200,8 @@ class FactPattern:
         else:
             cleaned_subject = raw_subject
 
+        cleaned_subject = cleaned_subject.rstrip('.!,;:"\'')
+
         # Determine predicate
         if self.default_predicate:
             predicate = self.default_predicate
@@ -208,7 +210,11 @@ class FactPattern:
         elif 'action' in groups:
             predicate = f"{groups['action'].strip().lower()} in"
         elif 'by_action' in groups:
-            predicate = f"{groups['by_action'].strip().lower()} by"
+            act = groups['by_action'].strip().lower()
+            if act == 'wrote':
+                predicate = "written by"
+            else:
+                predicate = f"{act} by"
         else:
             predicate = "related to"
 
@@ -217,6 +223,27 @@ class FactPattern:
             cleaned_subject = obj  # Subject is the speaker's name, e.g. (Honnesh, has name, Honnesh)
 
         if not cleaned_subject or not obj:
+            return None
+
+        # Guard against statistical percentages posing as entities
+        if re.search(r'\b(?:percent|percentage)\b|%', cleaned_subject, re.IGNORECASE):
+            return None
+
+        # Guard against complex clauses posing as noun phrases (e.g. compound sentences or relative clauses)
+        clause_markers = [
+            r'\b(?:is|are|was|were|am)\b',
+            r'\b(?:that|which|who|whose|whom)\b',
+            r'\b(?:and|but)\s+(?:the|our|their|a|an)\b'
+        ]
+        if any(re.search(marker, cleaned_subject, re.IGNORECASE) for marker in clause_markers):
+            return None
+
+        # Guard against auxiliary verb constructions in possession (e.g., "has been", "has become")
+        if predicate == 'has' and obj.lower().startswith(('been ', 'become ', 'done ')):
+            return None
+
+        # Guard against idiomatic state/condition in located in (e.g. "in turmoil", "in decline", "in doubt")
+        if predicate == 'located in' and obj.lower().startswith(('turmoil', 'decline', 'doubt', 'progress', 'trouble', 'ruins')):
             return None
 
         # Guard against incomplete trailing preposition fragments (e.g., from unmerged visual line breaks)
@@ -270,6 +297,14 @@ FACTUAL_PATTERNS = [
         regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+was\s+(?P<by_action>invented|discovered|developed|authored|written)\s+by\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate=None,  # Dynamic: "{by_action} by"
         description="Captures creator or discoverer relationships (e.g. Python was developed by Guido van Rossum)"
+    ),
+
+    # 5b. Author / Creator (Active Voice): "Author wrote/authored Work"
+    FactPattern(
+        name="AUTHORED_ACTIVE",
+        regex=r'^(?:The\s+(?:late\s+)?)?(?:(?:British|American|French|German|Indian|Russian|diplomat|scientist|physicist|author|writer|professor|dr)\s+)*(?P<object>(?:Sir\s+)?[A-Z][a-zA-Z\.\s]+?)\s+(?P<by_action>wrote|authored|invented|discovered|developed|created)\s+(?:a\s+(?:book|paper|novel|work)\s+(?:called|titled|named)\s+)?["\'“](?P<subject>[^"\'”]+)["\'”]\.?$',
+        default_predicate=None,  # Dynamic: "{by_action} by" -> canonical "developed by"
+        description="Captures active voice author/creator relationships (e.g. Sir John Glubb wrote a book called The Fate of Empires...)"
     ),
 
     # 6. Part of / Component of: "X is part of Y."
