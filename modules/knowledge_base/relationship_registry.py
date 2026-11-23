@@ -202,6 +202,19 @@ CANONICAL_RELATIONSHIPS: List[RelationshipDefinition] = [
         question_type="location",
         description="Institutional or geopolitical belonging."
     ),
+
+    # 15. Possession / Ownership
+    RelationshipDefinition(
+        canonical_predicate="has",
+        grammatical_variations=["has", "have", "owns", "own", "possesses", "possess", "holds", "hold"],
+        inverse_predicate="owned by",
+        expected_subject_type="Entity",
+        expected_object_type="Entity",
+        is_transitive=True,
+        supports_reverse=True,
+        question_type="possession",
+        description="Captures possession, ownership, or custody relationship."
+    ),
 ]
 
 

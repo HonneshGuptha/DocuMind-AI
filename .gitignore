@@ -43,3 +43,11 @@ uploads/*
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Archive files
+*.zip
+
+# Visual proof screenshots & runtime report exports
+screenshots/
+reports/*.json
+reports/*.pdf

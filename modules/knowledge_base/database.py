@@ -87,7 +87,9 @@ def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     Establish a connection to the SQLite database with row factory and foreign keys enabled.
     """
     resolved_path = get_db_path(db_path)
-    os.makedirs(os.path.dirname(resolved_path), exist_ok=True)
+    dirname = os.path.dirname(resolved_path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
     
     conn = sqlite3.connect(resolved_path)
     conn.row_factory = sqlite3.Row

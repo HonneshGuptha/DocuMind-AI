@@ -130,6 +130,17 @@ R10_CITY_CONTINENT_LOCATION = InferenceRule(
     description="If city X is in state Y, state Y is in country Z, and country Z is located in continent W, then city X is located in continent W."
 )
 
+R11_POSSESSION_TRANSITIVITY = InferenceRule(
+    rule_id="R11",
+    rule_name="Possession Transitivity Rule",
+    premises=[
+        ("X", "has", "Y"),
+        ("Y", "has", "Z"),
+    ],
+    conclusion=("X", "has", "Z"),
+    description="If entity X has Y, and Y has Z, then X has Z."
+)
+
 # Canonical aliases
 R1 = R1_CAPITAL_LOCATION
 R2 = R2_LOCATION_TRANSITIVITY
@@ -141,6 +152,7 @@ R7 = R7_COUNTRY_LOCATION
 R8 = R8_CITY_STATE_LOCATION
 R9 = R9_STATE_CONTINENT_LOCATION
 R10 = R10_CITY_CONTINENT_LOCATION
+R11 = R11_POSSESSION_TRANSITIVITY
 
 # Canonical rules (Module 4 core baseline)
 CANONICAL_RULES: List[InferenceRule] = [
@@ -162,6 +174,7 @@ ALL_RULES: List[InferenceRule] = [
     R8_CITY_STATE_LOCATION,
     R9_STATE_CONTINENT_LOCATION,
     R10_CITY_CONTINENT_LOCATION,
+    R11_POSSESSION_TRANSITIVITY,
 ]
 
 # Case-insensitive lookup dictionary supporting both short IDs ("R1") and full IDs ("R1_CAPITAL_LOCATION")
@@ -196,6 +209,9 @@ _RULE_LOOKUP: Dict[str, InferenceRule] = {
     "r10": R10_CITY_CONTINENT_LOCATION,
     "r10_city_continent_location": R10_CITY_CONTINENT_LOCATION,
     "city_continent_location": R10_CITY_CONTINENT_LOCATION,
+    "r11": R11_POSSESSION_TRANSITIVITY,
+    "r11_possession_transitivity": R11_POSSESSION_TRANSITIVITY,
+    "possession_transitivity": R11_POSSESSION_TRANSITIVITY,
 }
 
 

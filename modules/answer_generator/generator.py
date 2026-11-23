@@ -311,6 +311,26 @@ class AnswerGenerator:
             return f"{subj} studies at {obj}."
 
         # ----------------------------------------------------------------------
+        # Category 0e: Possession / Ownership
+        # ----------------------------------------------------------------------
+        elif q_type == 'possession':
+            if expected_field == 'subject':
+                # "Who has rolex watch?" -> "Kishore has rolex watch."
+                unique_subjects = list(dict.fromkeys(f.subject for f in all_facts if getattr(f, 'subject', None)))
+                if len(unique_subjects) > 1:
+                    subj_str = ", ".join(unique_subjects[:-1]) + f" and {unique_subjects[-1]}"
+                    return f"{subj_str} have {obj}."
+                return f"{subj} has {obj}."
+            if is_speaker_query:
+                return f"You have {obj}."
+            if len(all_facts) > 1:
+                unique_objects = list(dict.fromkeys(f.object for f in all_facts if getattr(f, 'object', None)))
+                if len(unique_objects) > 1:
+                    obj_str = ", ".join(unique_objects[:-1]) + f" and {unique_objects[-1]}"
+                    return f"{subj} has {obj_str}."
+            return f"{subj} has {obj}."
+
+        # ----------------------------------------------------------------------
         # Category 1: Capital
         # ----------------------------------------------------------------------
         if q_type == 'capital':
@@ -325,11 +345,24 @@ class AnswerGenerator:
         # Category 2: Location
         # ----------------------------------------------------------------------
         elif q_type == 'location':
+            if expected_field == 'subject':
+                # e.g. "Who is in Sai's dream?" -> "Ayyappa is in Sai's dream."
+                unique_subjects = list(dict.fromkeys(f.subject for f in all_facts if getattr(f, 'subject', None)))
+                if len(unique_subjects) > 1:
+                    subj_str = ", ".join(unique_subjects[:-1]) + f" and {unique_subjects[-1]}"
+                    return f"{subj_str} are in {obj}."
+                source_sent = getattr(primary_fact, 'source_sentence', '') or ''
+                if primary_fact.predicate == 'is in' or 'is in' in source_sent.lower():
+                    return f"{subj} is in {obj}."
+                return f"{subj} is located in {obj}."
             # "Where is Tokyo located?" -> "Tokyo is located in Japan."
             if len(all_facts) > 1:
                 locations = [f.object for f in all_facts]
                 loc_list = ", ".join(locations)
                 return f"{subj} is located in: {loc_list}."
+            source_sent = getattr(primary_fact, 'source_sentence', '') or ''
+            if primary_fact.predicate == 'is in' or 'is in' in source_sent.lower():
+                return f"{subj} is in {obj}."
             return f"{subj} is located in {obj}."
 
         # ----------------------------------------------------------------------

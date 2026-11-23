@@ -159,9 +159,7 @@ class DocuMindService:
             upload_folder: Path to directory for persisting uploaded documents.
         """
         self.db_path = db_path
-        self.upload_folder = upload_folder or os.path.abspath(
-            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
-        )
+        self.upload_folder = os.path.abspath(upload_folder or os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads'))
         os.makedirs(self.upload_folder, exist_ok=True)
 
         # Initialize SQLite Knowledge Base
@@ -360,7 +358,20 @@ class DocuMindService:
                     'document_id': existing_doc.document_id,
                     'filename': sanitized_name,
                     'file_format': ext,
-                    'facts_extracted': len(existing_facts)
+                    'char_count': size,
+                    'word_count': 0,
+                    'facts_extracted': len(existing_facts),
+                    'extracted_facts': [
+                        {
+                            'fact_id': f.fact_id,
+                            'subject': f.subject,
+                            'predicate': f.predicate,
+                            'object': f.object,
+                            'source_sentence': f.source_sentence,
+                            'sentence_index': f.sentence_index
+                        }
+                        for f in existing_facts
+                    ]
                 }
 
         # 7. Persist file to disk

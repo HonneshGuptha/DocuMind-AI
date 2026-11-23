@@ -88,12 +88,27 @@ class QuestionClassifier:
         (
             'location',
             [
+                re.compile(r'^(?:who|what)\s+is\s+in\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^(?:who|what)\s+is\s+(?:located|situated)\s+in\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^where\s+is\s+(?P<entity>.+?)\s+(?:located|situated)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^which\s+(?:country|state|continent|region)\s+(?:is|does)\s+(?P<entity>.+?)\s+(?:located\s+in|situated\s+in|belong\s+to|in)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what|which)\s+(?:continent|country)\s+is\s+(?P<entity>.+?)\s+(?:located|situated)\s+in\s*\?*$', re.IGNORECASE),
                 re.compile(r'^(?:what|which)\s+(?:country|state|continent)\s+does\s+(?P<entity>.+?)\s+belong\s+to\s*\?*$', re.IGNORECASE),
                 re.compile(r'^in\s+which\s+(?:country|state|continent|region|place)\s+is\s+(?P<entity>.+?)(?:\s+(?:located|situated))?\s*\?*$', re.IGNORECASE),
                 re.compile(r'^where\s+is\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
+            ]
+        ),
+
+        # 6b. Possession / Ownership Question
+        (
+            'possession',
+            [
+                re.compile(r'^who\s+(?:has|owns|possesses|holds)\s+(?P<entity>.+?)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^what\s+does\s+(?P<entity>.+?)\s+(?:have|own|possess|hold)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^what\s+do\s+i\s+(?:have|own|possess|hold)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^who\s+is\s+(?P<entity>.+?)\s+(?:owned|possessed|held)\s+by\s*\?*$', re.IGNORECASE),
+                re.compile(r'^does\s+(?P<e1>.+?)\s+(?:have|own|possess|hold)\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^do\s+i\s+(?:have|own|possess|hold)\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
             ]
         ),
 
@@ -167,6 +182,7 @@ class QuestionClassifier:
                 re.compile(r'^am\s+i\s+(?:a|an)\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^is\s+(?P<e1>.+?)\s+a\s+(?P<e2>(?:state|city|country|province|continent)\s+in\s+.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^is\s+(?P<e1>.+?)\s+(?:located|situated)\s+in\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
+                re.compile(r'^is\s+(?P<e1>.+?)\s+in\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^does\s+(?P<e1>.+?)\s+belong\s+to\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
                 re.compile(r'^is\s+(?P<e1>.+?)\s+(?:a|an)\s+(?P<e2>.+?)\s*\?*$', re.IGNORECASE),
             ]

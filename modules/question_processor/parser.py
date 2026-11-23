@@ -358,6 +358,20 @@ class QuestionParser:
         return self._unsupported_query(orig_q, 'education')
 
     def _parse_location(self, q: str, orig_q: str) -> StructuredQuery:
+        # Reverse location query: "Who is in Sai's dream?" / "What is in Sai's dream?"
+        m_rev = re.match(r'^(?:who|what)\s+is\s+(?:located\s+in|situated\s+in|in)\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_rev:
+            obj = clean_entity(m_rev.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='location',
+                subject=None,
+                predicate='located in',
+                object=obj,
+                expected_answer_field='subject',
+                parsing_status='success'
+            )
+
         m = re.match(r'^where\s+is\s+(?P<entity>.+?)\s+(?:located|situated)\s*\?*$', q, re.IGNORECASE)
         if not m:
             m = re.match(r'^which\s+(?:country|state|continent|region)\s+(?:is|does)\s+(?P<entity>.+?)\s+(?:located\s+in|situated\s+in|belong\s+to|in)\s*\?*$', q, re.IGNORECASE)
@@ -383,6 +397,92 @@ class QuestionParser:
             )
 
         return self._unsupported_query(orig_q, 'location')
+
+    def _parse_possession(self, q: str, orig_q: str) -> StructuredQuery:
+        # "Who has rolex watch?" / "Who owns rolex watch?"
+        m_who = re.match(r'^who\s+(?:has|owns|possesses|holds)\s+(?P<entity>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_who:
+            obj = clean_entity(m_who.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject=None,
+                predicate='has',
+                object=obj,
+                expected_answer_field='subject',
+                parsing_status='success'
+            )
+
+        # "What does Kishore have?" / "What does Kishore own?"
+        m_what = re.match(r'^what\s+does\s+(?P<entity>.+?)\s+(?:have|own|possess|hold)\s*\?*$', q, re.IGNORECASE)
+        if m_what:
+            subj = clean_entity(m_what.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject=subj,
+                predicate='has',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "What do I have?"
+        if re.match(r'^what\s+do\s+i\s+(?:have|own|possess|hold)\s*\?*$', q, re.IGNORECASE):
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject='Speaker',
+                predicate='has',
+                object=None,
+                expected_answer_field='object',
+                parsing_status='success'
+            )
+
+        # "Who is <entity> owned by?"
+        m_by = re.match(r'^who\s+is\s+(?P<entity>.+?)\s+(?:owned|possessed|held)\s+by\s*\?*$', q, re.IGNORECASE)
+        if m_by:
+            obj = clean_entity(m_by.group('entity'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject=None,
+                predicate='has',
+                object=obj,
+                expected_answer_field='subject',
+                parsing_status='success'
+            )
+
+        # Boolean: "Does Kishore have rolex watch?" / "Does Akash have kishore?"
+        m_bool = re.match(r'^does\s+(?P<e1>.+?)\s+(?:have|own|possess|hold)\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_bool:
+            s = clean_entity(m_bool.group('e1'))
+            o = clean_entity(m_bool.group('e2'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject=s,
+                predicate='has',
+                object=o,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Boolean: "Do I have rolex watch?"
+        m_bool_i = re.match(r'^do\s+i\s+(?:have|own|possess|hold)\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_bool_i:
+            o = clean_entity(m_bool_i.group('e2'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='possession',
+                subject='Speaker',
+                predicate='has',
+                object=o,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        return self._unsupported_query(orig_q, 'possession')
 
     def _parse_establishment(self, q: str, orig_q: str) -> StructuredQuery:
         m = re.match(r'^(?:when|(?:in\s+)?(?:what|which)\s+year)\s+was\s+(?P<entity>.+?)\s+(?P<action>founded|established|created|built)\s*\?*$', q, re.IGNORECASE)
@@ -607,6 +707,21 @@ class QuestionParser:
         if m_loc:
             subj = clean_entity(m_loc.group('e1'))
             obj = clean_entity(m_loc.group('e2'))
+            return StructuredQuery(
+                original_question=orig_q,
+                question_type='location',
+                subject=subj,
+                predicate='located in',
+                object=obj,
+                expected_answer_field='boolean',
+                parsing_status='success'
+            )
+
+        # Pattern C2: "Is Ayyappa in Sai's dream?"
+        m_in = re.match(r'^is\s+(?P<e1>.+?)\s+in\s+(?P<e2>.+?)\s*\?*$', q, re.IGNORECASE)
+        if m_in:
+            subj = clean_entity(m_in.group('e1'))
+            obj = clean_entity(m_in.group('e2'))
             return StructuredQuery(
                 original_question=orig_q,
                 question_type='location',

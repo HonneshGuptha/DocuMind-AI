@@ -102,8 +102,6 @@ def normalize_document_linebreaks(text: str) -> str:
             if not line.endswith(('.', '!', '?')):
                 if first_next_char.islower():
                     is_continuation = True
-                elif next_line.startswith(('I ', 'i ')):
-                    is_continuation = True
                 elif last_token in CONNECTING_WORDS:
                     is_continuation = True
                 elif last_token in MULTIWORD_FIRST_TOKENS:
@@ -237,23 +235,23 @@ FACTUAL_PATTERNS = [
     # 1. Capital of: "X is the capital of Y."
     FactPattern(
         name="CAPITAL_OF",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+the\s+capital\s+of\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+is\s+the\s+capital\s+of\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="capital of",
         description="Captures capital city relationships (e.g. Bangalore is the capital of Karnataka)"
     ),
 
-    # 2. Located in / Situated in: "X is located in Y."
+    # 2. Located in / Situated in / Is in: "X is located in Y." or "X is in Y."
     FactPattern(
         name="LOCATED_IN",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+(?:located|situated)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+is\s+(?:located\s+in|situated\s+in|in)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="located in",
-        description="Captures geographic containment (e.g. Tokyo is located in Japan)"
+        description="Captures geographic containment or presence (e.g. Tokyo is located in Japan / Ayyappa is in Sai's dream)"
     ),
 
     # 3. State / City / Country in: "X is a state in Y."
     FactPattern(
         name="REGION_IN",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+a\s+(?P<type>state|city|country|province|district|territory|continent)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+is\s+a\s+(?P<type>state|city|country|province|district|territory|continent)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate=None,  # Dynamic: "is a {type} in"
         description="Captures administrative subdivisions (e.g. Karnataka is a state in India)"
     ),
@@ -261,7 +259,7 @@ FACTUAL_PATTERNS = [
     # 4. Established / Founded in: "X was established in YEAR."
     FactPattern(
         name="ESTABLISHED_IN",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+was\s+(?P<action>established|founded|created|built)\s+in\s+(?P<object>\d{1,4}(?:\s*(?:BC|BCE|AD|CE))?|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+was\s+(?P<action>established|founded|created|built)\s+in\s+(?P<object>\d{1,4}(?:\s*(?:BC|BCE|AD|CE))?|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate=None,  # Dynamic: "{action} in"
         description="Captures founding year or institution inception (e.g. Harvard University was founded in 1636)"
     ),
@@ -269,7 +267,7 @@ FACTUAL_PATTERNS = [
     # 5. Invented / Discovered / Developed by: "X was invented by Y."
     FactPattern(
         name="CREATED_BY",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+was\s+(?P<by_action>invented|discovered|developed|authored|written)\s+by\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+was\s+(?P<by_action>invented|discovered|developed|authored|written)\s+by\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate=None,  # Dynamic: "{by_action} by"
         description="Captures creator or discoverer relationships (e.g. Python was developed by Guido van Rossum)"
     ),
@@ -277,7 +275,7 @@ FACTUAL_PATTERNS = [
     # 6. Part of / Component of: "X is part of Y."
     FactPattern(
         name="PART_OF",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+(?:a\s+)?part\s+of\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+is\s+(?:a\s+)?part\s+of\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="part of",
         description="Captures meronymic part-whole relations (e.g. Engine is part of Car)"
     ),
@@ -285,7 +283,7 @@ FACTUAL_PATTERNS = [
     # 7. Borders / Neighbors: "X borders Y."
     FactPattern(
         name="BORDERS",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:borders|neighbors)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:borders|neighbors)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="borders",
         description="Captures geographic adjacency (e.g. Canada borders United States)"
     ),
@@ -293,7 +291,7 @@ FACTUAL_PATTERNS = [
     # 8. Produces / Manufactures: "X produces Y."
     FactPattern(
         name="PRODUCES",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:produces|manufactures)\s+(?P<object>[a-zA-Z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:produces|manufactures)\s+(?P<object>[a-zA-Z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="produces",
         description="Captures production relationships (e.g. Brazil produces coffee)"
     ),
@@ -301,7 +299,7 @@ FACTUAL_PATTERNS = [
     # 9. Speaker Name Declaration: "My name is X."
     FactPattern(
         name="NAME_DECLARATION",
-        regex=r'^(?:My\s+name\s+is|I\s+am\s+called|I\s+go\s+by)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:My\s+name\s+is|I\s+am\s+called|I\s+go\s+by)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="has name",
         description="Captures speaker name declaration (e.g. My name is Honnesh)",
         is_speaker_declaration=True
@@ -310,7 +308,7 @@ FACTUAL_PATTERNS = [
     # 10. Living / Residence: "I live in X." or "X lives in Y."
     FactPattern(
         name="LIVES_IN",
-        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:lives?|resides?|am\s+living|is\s+living|am\s+residing|is\s+residing)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:lives?|resides?|am\s+living|is\s+living|am\s+residing|is\s+residing)\s+in\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="lives in",
         description="Captures residence (e.g. I live in Bangalore / Prakruthi lives in Bengaluru)"
     ),
@@ -318,7 +316,7 @@ FACTUAL_PATTERNS = [
     # 11. Employment / Work: "I work at X." or "X works at Y."
     FactPattern(
         name="WORKS_AT",
-        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:works?|is\s+employed|am\s+employed)\s+(?:at|for|in)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:works?|is\s+employed|am\s+employed)\s+(?:at|for|in)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="works at",
         description="Captures workplace or employer (e.g. I work at KPMG / Honnesh works at KPMG)"
     ),
@@ -326,7 +324,7 @@ FACTUAL_PATTERNS = [
     # 12. Studies at / Education: "I study at X." or "X studies at Y."
     FactPattern(
         name="STUDIES_AT",
-        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:stud(?:y|ies)|attends?)\s+at\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:stud(?:y|ies)|attends?)\s+at\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="studies at",
         description="Captures education institution (e.g. I study at RUAS / Honnesh studies at RUAS)"
     ),
@@ -334,7 +332,7 @@ FACTUAL_PATTERNS = [
     # 13. College / Institution specification: "My college is X."
     FactPattern(
         name="COLLEGE_IS",
-        regex=r'^(?:My|(?P<subject>[A-Za-z0-9\s\.\-]+?)[\'’]s)\s+(?:college|university|school|institution)\s+is\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:My|(?P<subject>[A-Za-z0-9\s\.\-\'’]+?)[\'’]s)\s+(?:college|university|school|institution)\s+is\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="studies at",
         description="Captures college association (e.g. My college is RUAS)"
     ),
@@ -342,7 +340,7 @@ FACTUAL_PATTERNS = [
     # 14. Student / Occupational Role: "I am an AI and ML engineering student."
     FactPattern(
         name="STUDENT_ROLE",
-        regex=r'^(?:(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+(?:am|is|are|\'m))\s+(?:an?|the)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?\s+student)\.?$',
+        regex=r'^(?:(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:am|is|are|\'m))\s+(?:an?|the)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?\s+student)\.?$',
         default_predicate="is a",
         description="Captures student classification (e.g. I am an AI and ML engineering student)"
     ),
@@ -350,7 +348,7 @@ FACTUAL_PATTERNS = [
     # 15. Belongs To: "X belongs to Y."
     FactPattern(
         name="BELONGS_TO",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+belongs?\s+to\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+belongs?\s+to\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="belongs to",
         description="Captures geopolitical or organizational belonging (e.g. Bangalore belongs to Karnataka)"
     ),
@@ -358,9 +356,17 @@ FACTUAL_PATTERNS = [
     # 16. Generic Is a / Is an (Classification/Type): "X is a TYPE."
     FactPattern(
         name="IS_A",
-        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-]*?)\s+is\s+(?:a|an)\s+(?P<object>[a-zA-Z0-9\s\.\-]*?)\.?$',
+        regex=r'^(?:The\s+)?(?P<subject>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+is\s+(?:a|an)\s+(?P<object>[a-zA-Z0-9\s\.\-\'’]*?)\.?$',
         default_predicate="is a",
         description="Captures taxonomic / class membership (e.g. Python is a programming language)"
+    ),
+
+    # 17. Possession / Ownership: "X has Y."
+    FactPattern(
+        name="POSSESSION",
+        regex=r'^(?:The\s+)?(?P<subject>I|[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\s+(?:has|have|owns?|possesses?|holds?)\s+(?P<object>[A-Za-z0-9][A-Za-z0-9\s\.\-\'’]*?)\.?$',
+        default_predicate="has",
+        description="Captures possession or ownership (e.g. Kishore has rolex watch / Akash has kishore)"
     ),
 ]
 
